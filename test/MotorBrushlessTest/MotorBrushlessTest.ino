@@ -3,10 +3,11 @@
 *
 *  Valor en consola:
 *
-*    Motor Brushless (A2212/13T)
+*    Probado con Motor Brushless (A2212/13T)
 *    0 = Iniciar (beeps)
 *    30 = Iniciar (beeps de inicio)
 *    100 = Girar motor
+*    El valor de motores puede variar
 *
 *    Referencias:
 *    http://techvalleyprojects.blogspot.mx/2012/06/arduino-control-escmotor-tutorial.html

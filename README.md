@@ -3,7 +3,7 @@ Proyecto Drone Hacker
 
 Desarrollo del proyecto Drone Hacker.
 
-MotorBrushlessTest -> Prueba de x4 motores brushless.
+Pruebas Unitarias -> test
 
 Notas
 =====
