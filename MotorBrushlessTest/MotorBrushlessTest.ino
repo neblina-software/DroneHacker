@@ -14,13 +14,20 @@
 
 #include <Servo.h>
 
-Servo myMotor;
+Servo myMotorPin5;
+Servo myMotorPin7;
+Servo myMotorPin9;
+Servo myMotorPin11;
+
 String incomingString;
 
 void setup()
 {
-  // Arduino pin #9
-  myMotor.attach(9);
+  // Pins
+  myMotorPin5.attach(5);
+  myMotorPin7.attach(7);
+  myMotorPin9.attach(9);
+  myMotorPin11.attach(11);
   // Debug
   Serial.begin(9600);
   Serial.println("iniciando...");
@@ -52,7 +59,10 @@ void loop()
       if (val > -1 && val < 181)
      {
        Serial.println("Valor entre 0 y 180");
-       myMotor.write(val);
+       myMotorPin5.write(val);
+       myMotorPin7.write(val);
+       myMotorPin9.write(val);
+       myMotorPin11.write(val);
      }
      else
      {
