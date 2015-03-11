@@ -4,9 +4,9 @@
 *  Valor en consola:
 *
 *    Probado con Motor Brushless (A2212/13T)
-*    0 = Iniciar (beeps)
-*    30 = Iniciar (beeps de inicio)
-*    100 = Girar motor
+*    0 = Beeps
+*    30 = Armar
+*    54 = Girar motor
 *    El valor de motores puede variar
 *
 *    Referencias:
