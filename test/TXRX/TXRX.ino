@@ -1,18 +1,24 @@
 /**
-*  DroneHacker (c) 2015 Anibal Gomez
-*  Radio TX / RX
+* DroneHacker (c) 2015 Anibal Gomez
+* Probado Con Turnigy 5x
 *
-*  Basado en:
+* Basado en:
 *  --------------------
-   RC PulseIn Joystick
-   By: Nick Poole
-   SparkFun Electronics
-   Date: 5
-   License: CC-BY SA 3.0 - Creative commons share-alike 3.0
-   use this code however you'd like, just keep this license and
-   attribute. Let me know if you make hugely, awesome, great changes.
+*   RC PulseIn Joystick
+*   By: Nick Poole
+*   SparkFun Electronics
+*   Date: 5
+*   License: CC-BY SA 3.0 - Creative commons share-alike 3.0
+*   use this code however you'd like, just keep this license and
+*   attribute. Let me know if you make hugely, awesome, great changes.
 *  --------------------
-*  Ref: https://www.sparkfun.com/tutorials/348
+* Ref: https://www.sparkfun.com/tutorials/348
+*
+* LICENSE
+*
+* This source file is subject to the new BSD license that is bundled
+* with this package in the file LICENSE.txt.
+*
 */
 
 int ch1; // Here's where we'll keep our channel values
