@@ -4,6 +4,9 @@
 * Software Controlador De Vuelo
 * ---------------------------------
 *
+* Quadcoptero
+* -----------
+*
 *            NW      NE
 *            |\     /|
 *            ( \   / )
@@ -83,6 +86,7 @@ void loop() {
   if(ch1Aileron > 1000) Serial.println("Transmisor encendido"); 
   if(ch1Aileron < 1000) Serial.println("Transmisor apagado");
 
+  disarm();
   arm();
 
   if(debugConsole == 1) {                                 
@@ -115,6 +119,7 @@ void arm() {
   initThrottle = map(ch3Throttle, 1000, 2000, -500, 500);
   if(initThrottle < -480 && initAileron > 480) {
     startCounting = startCounting + 1000;
+    delay(100);
   } else {
     startCounting = 0;
   }
@@ -126,6 +131,23 @@ void arm() {
   
 }
 
+void disarm() {
+  
+  initThrottle = map(ch3Throttle, 1000, 2000, -500, 500);
+  if(initThrottle < -480) {
+    startCounting = startCounting + 1000;
+    delay(100);
+  } else {
+    startCounting = 0;
+  }
+  
+  if(startCounting == 15000) {
+    Serial.println("Vehiculo Desarmado...");
+    armed = 0;
+  }
+  
+}
+
 void stabilized(int motorSpeed) {
   if(armed == 1) {
     motorNW.write(motorSpeed);
@@ -133,4 +155,5 @@ void stabilized(int motorSpeed) {
     motorSE.write(motorSpeed);
     motorSW.write(motorSpeed);
   }
+  
 }
