@@ -30,7 +30,7 @@
 
 #include <Servo.h>
 
-int debugConsole = 1;
+int debugConsole = 0;
 
 Servo motorNW;
 Servo motorNE;
@@ -51,6 +51,8 @@ int power = 0;
 
 int armCounting = 0;
 int disarmCounting = 0;
+
+int motorSpeed;
 
 // A2212-13T
 int calibrateMin = 43;
@@ -157,8 +159,8 @@ void loop() {
     delay(500);
   }
   
-  vlevitate = map(ch3Throttle, 1000, 2000, -500, 500); // rx - tx values
-  vlevitate = constrain(vlevitate, -255, 255); // valid pwm values
+  vlevitate = map(ch3Throttle, 1000, 2000, 0, 180); // rx - tx values -> pwm values
+  vlevitate = constrain(vlevitate , 0, 180);
   
   Serial.print("Pasar valor a motor -> ");
   Serial.println(vlevitate);
@@ -167,14 +169,24 @@ void loop() {
   //qmove = constrain(qmove, -255, 255);
       
     if(power == 1) {
-      Serial.println("Arrancando motores a: ");
-      Serial.println(vlevitate);
-      /**
-      motorNW.write(vlevitate);
-      motorNE.write(vlevitate);
-      motorSE.write(vlevitate);
-      motorSW.write(vlevitate);
-      **/
+      if(vlevitate <= 30) {
+        motorSpeed = 40;
+      }else if(vlevitate <= 40) {
+        motorSpeed = 44;
+      } else {
+        motorSpeed = vlevitate;
+      }
+      
+      Serial.print("Arrancando motores a: ");
+      Serial.println(motorSpeed);
+      
+      if(debugConsole != 1) {
+        motorNW.write(motorSpeed);
+        motorNE.write(motorSpeed);
+        motorSE.write(motorSpeed);
+        motorSW.write(motorSpeed);
+      }
+      
     }
              
 }
