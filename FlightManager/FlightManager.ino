@@ -37,18 +37,24 @@ Servo motorNE;
 Servo motorSE;
 Servo motorSW;
 
-int ch1Aileron;
+int ch1Aileron; // Flight Mode
 int ch2Elevator;
 int ch3Throttle;
 int ch4Rudder;
-int ch5LandingGear;
+int ch5LandingGear; // Roll
 
 int vlevitate;
 int vmove;
 
 int armed = 0;
+int power = 0;
 
-int startCounting = 0;
+int armCounting = 0;
+int disarmCounting = 0;
+
+// A2212-13T
+int calibrateMin = 43;
+int calibrateMax = 180;
 
 void setup() {
   
@@ -63,9 +69,16 @@ void setup() {
   pinMode(6, INPUT);
   pinMode(7, INPUT);
   
-  stabilized(0);
+  // arm
+  motorNW.write(0);
+  motorNE.write(0);
+  motorSE.write(0);
+  motorSW.write(0);
   delay(30);
-  stabilized(30);
+  motorNW.write(30);
+  motorNE.write(30);
+  motorSE.write(30);
+  motorSW.write(30);
   
   Serial.begin(9600);
   Serial.println("iniciando...");
@@ -74,7 +87,15 @@ void setup() {
 
 void loop() {
   
-  startedTime = millis();
+  /**
+  if(armed == 1) {
+    Serial.println("El vehiculo se encuentra armando... (Precaucion)");
+  } else {
+    Serial.println("Vehiculo desarmado...");
+  }
+  **/
+  
+  //startedTime = millis();
  
   // Read the pulse width of each channel
   ch1Aileron = pulseIn(3, HIGH, 25000);
@@ -83,77 +104,78 @@ void loop() {
   ch4Rudder = pulseIn(6, HIGH, 25000);
   ch5LandingGear = pulseIn(7, HIGH, 25000);
   
-  if(ch1Aileron > 1000) Serial.println("Transmisor encendido"); 
-  if(ch1Aileron < 1000) Serial.println("Transmisor apagado");
+  if(ch1Aileron > 1) {
+    Serial.println("Transmisor encendido");
+    power = 1;
+  }
+  
+  if(ch1Aileron < 1) {
+    Serial.println("Transmisor apagado");
+    power = 0;
+  }
 
-  disarm();
-  arm();
+/**
+  if(power == 1) {
+    if(ch3Throttle < -440 && ch5LandingGear < -440) {
+      Serial.println("Empezando conteo: ");
+      armCounting = armCounting + 1000;
+      Serial.println(armCounting);
+    } else {
+      armCounting = 0;
+    }
+    if(armCounting == 15000) {
+      Serial.println("Vehiculo Armado...");
+      armCounting = 0;
+      armed = 1;
+    }
+  }
+  
+  if(ch3Throttle < -440 && ch5LandingGear > 0) {
+    Serial.println("Desarmando...: ");
+    disarmCounting = disarmCounting + 1000;
+    Serial.println(disarmCounting);
+  }
+  if(disarmCounting == 10000) {
+    Serial.println("Vehiculo Desarmado...");
+    disarmCounting = 0;
+    armed = 0;
+  }
+  **/
 
-  if(debugConsole == 1) {                                 
-    Serial.print("Left Stick Y:");
-    Serial.println(map(ch3Throttle, 1000, 2000, -500, 500));
-    Serial.print("Right Stick Y:");
+  if(debugConsole == 1) {   
+    Serial.print("Canal 1 Aileron:");
+    Serial.println(map(ch1Aileron, 1000, 2000, -500, 500));    
+    Serial.print("Canal 2 Elevator:");
     Serial.println(map(ch2Elevator, 1000, 2000, -500, 500));
+    Serial.print("Canal 3 Throttle:");
+    Serial.println(map(ch3Throttle, 1000, 2000, -500, 500));
+    Serial.print("Canal 4 Rudder:");
+    Serial.println(map(ch4Rudder, 1000, 2000, -500, 500));
+    Serial.print("Canal 5 Landing:");
+    Serial.println(map(ch5LandingGear, 1000, 2000, -500, 500));
     Serial.println();
-    delay(100);
+    delay(500);
   }
   
   vlevitate = map(ch3Throttle, 1000, 2000, -500, 500); // rx - tx values
-  vlevitate = constrain(vlevitate, 40, 180); // valid pwm values
+  vlevitate = constrain(vlevitate, -255, 255); // valid pwm values
+  
+  Serial.print("Pasar valor a motor -> ");
+  Serial.println(vlevitate);
   
   //qmove = map(ch2Elevator, 1000,2000, -500, 500);
   //qmove = constrain(qmove, -255, 255);
       
-  if(vlevitate > 53){
-    stabilized(vlevitate);
-  }
-  if(vlevitate < 53) {
-    stabilized(vlevitate);
-  }
+    if(power == 1) {
+      Serial.println("Arrancando motores a: ");
+      Serial.println(vlevitate);
+      /**
+      motorNW.write(vlevitate);
+      motorNE.write(vlevitate);
+      motorSE.write(vlevitate);
+      motorSW.write(vlevitate);
+      **/
+    }
              
 }
 
-void arm() {
-    
-  initAileron =  map(ch1Aileron, 1000, 2000, -500, 500);
-  initThrottle = map(ch3Throttle, 1000, 2000, -500, 500);
-  if(initThrottle < -480 && initAileron > 480) {
-    startCounting = startCounting + 1000;
-    delay(100);
-  } else {
-    startCounting = 0;
-  }
-  
-  if(startCounting == 30000) {
-    Serial.println("Vehiculo Armado...");
-    armed = 1;
-  }
-  
-}
-
-void disarm() {
-  
-  initThrottle = map(ch3Throttle, 1000, 2000, -500, 500);
-  if(initThrottle < -480) {
-    startCounting = startCounting + 1000;
-    delay(100);
-  } else {
-    startCounting = 0;
-  }
-  
-  if(startCounting == 15000) {
-    Serial.println("Vehiculo Desarmado...");
-    armed = 0;
-  }
-  
-}
-
-void stabilized(int motorSpeed) {
-  if(armed == 1) {
-    motorNW.write(motorSpeed);
-    motorNE.write(motorSpeed);
-    motorSE.write(motorSpeed);
-    motorSW.write(motorSpeed);
-  }
-  
-}

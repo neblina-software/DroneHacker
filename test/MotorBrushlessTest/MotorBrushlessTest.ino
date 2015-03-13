@@ -6,8 +6,25 @@
 *    Probado con Motor Brushless (A2212/13T)
 *    0 = Beeps
 *    30 = Armar
-*    54 = Girar motor
+*    43 = Girar motor
 *    El valor de motores puede variar
+*
+* Quadcoptero
+* -----------
+*
+*            NW      NE
+*            |\     /|
+*            ( \   / )
+*             \ (_) / 
+*              ) _ (  
+*             / ( ) \ 
+*            ( /   \ )
+*            |/     \|
+*            SW     SE
+*       
+* ---------------------------------
+* anibalgomez@icloud.com
+* ---------------------------------
 *
 *    Referencias:
 *    http://techvalleyprojects.blogspot.mx/2012/06/arduino-control-escmotor-tutorial.html
@@ -21,20 +38,20 @@
 
 #include <Servo.h>
 
-Servo myMotorPin5;
-Servo myMotorPin7;
-Servo myMotorPin9;
-Servo myMotorPin11;
+Servo motorNW;
+Servo motorNE;
+Servo motorSE;
+Servo motorSW;
 
 String incomingString;
 
 void setup()
 {
   // Pins
-  myMotorPin5.attach(5);
-  myMotorPin7.attach(7);
-  myMotorPin9.attach(9);
-  myMotorPin11.attach(11);
+  motorNW.attach(8);
+  motorNE.attach(9);
+  motorSE.attach(11);
+  motorSW.attach(13);
   // Debug
   Serial.begin(9600);
   Serial.println("iniciando...");
@@ -66,10 +83,10 @@ void loop()
       if (val > -1 && val < 181)
      {
        Serial.println("Valor entre 0 y 180");
-       myMotorPin5.write(val);
-       myMotorPin7.write(val);
-       myMotorPin9.write(val);
-       myMotorPin11.write(val);
+       motorNW.write(val);
+       motorNE.write(val);
+       motorSE.write(val);
+       motorSW.write(val);
      }
      else
      {
