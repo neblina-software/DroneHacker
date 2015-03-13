@@ -37,7 +37,7 @@ Servo motorNE;
 Servo motorSE;
 Servo motorSW;
 
-// Mode 2
+// See Mode 2 Diagram
 int ch1Aileron; // Roll
 int ch2Elevator; // Pitch
 int ch3Throttle; // Throttle
@@ -182,13 +182,17 @@ void loop() {
       Serial.println(motorSpeed);
       
       if(debugConsole != 1) {
-        motorNW.write(motorSpeed);
-        motorNE.write(motorSpeed);
-        motorSE.write(motorSpeed);
-        motorSW.write(motorSpeed);
+        stabilized(motorSpeed);
       }
       
     }
              
+}
+
+void stabilized(int motorSpeed) {
+  motorNW.write(motorSpeed);
+  motorNE.write(motorSpeed);
+  motorSE.write(motorSpeed);
+  motorSW.write(motorSpeed);
 }
 
