@@ -37,11 +37,12 @@ Servo motorNE;
 Servo motorSE;
 Servo motorSW;
 
-int ch1Aileron; // Flight Mode
-int ch2Elevator;
-int ch3Throttle;
-int ch4Rudder;
-int ch5LandingGear; // Roll
+// Mode 2
+int ch1Aileron; // Roll
+int ch2Elevator; // Pitch
+int ch3Throttle; // Throttle
+int ch4Rudder; // Yaw
+int ch5LandingGear; // Flight Mode
 
 int vlevitate;
 int vmove;
