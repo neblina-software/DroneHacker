@@ -55,9 +55,16 @@ int disarmCounting = 0;
 
 int motorSpeed;
 
+#define NE_Min 54
+#define NE_Max
+#define SW_Min 43
+#define SW_Max 133
+#define SE_Min 43
+#define SE_Max 133
+
 // A2212-13T
-int calibrateMin = 43;
-int calibrateMax = 180;
+int calibratedMin = 0;
+int calibratedMax = 180;
 
 void setup() {
   
@@ -147,21 +154,21 @@ void loop() {
 
   if(debugConsole == 1) {   
     Serial.print("Canal 1 Aileron:");
-    Serial.println(map(ch1Aileron, 1000, 2000, -500, 500));    
+    Serial.println(map(ch1Aileron, 1000, 2000, calibratedMin, calibratedMax));    
     Serial.print("Canal 2 Elevator:");
-    Serial.println(map(ch2Elevator, 1000, 2000, -500, 500));
+    Serial.println(map(ch2Elevator, 1000, 2000, calibratedMin, calibratedMax));
     Serial.print("Canal 3 Throttle:");
-    Serial.println(map(ch3Throttle, 1000, 2000, -500, 500));
+    Serial.println(map(ch3Throttle, 1000, 2000, calibratedMin, calibratedMax));
     Serial.print("Canal 4 Rudder:");
-    Serial.println(map(ch4Rudder, 1000, 2000, -500, 500));
+    Serial.println(map(ch4Rudder, 1000, 2000, calibratedMin, calibratedMax));
     Serial.print("Canal 5 Landing:");
-    Serial.println(map(ch5LandingGear, 1000, 2000, -500, 500));
+    Serial.println(map(ch5LandingGear, 1000, 2000, calibratedMin, calibratedMax));
     Serial.println();
     delay(500);
   }
   
-  vlevitate = map(ch3Throttle, 1000, 2000, 0, 180); // rx - tx values -> pwm values
-  vlevitate = constrain(vlevitate , 0, 180);
+  vlevitate = map(ch3Throttle, 1000, 2000, calibratedMin, calibratedMax); // rx - tx values -> pwm values
+  vlevitate = constrain(vlevitate , calibratedMin, calibratedMax);
   
   Serial.print("Pasar valor a motor -> ");
   Serial.println(vlevitate);
