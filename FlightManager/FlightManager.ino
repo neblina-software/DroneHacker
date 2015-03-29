@@ -202,6 +202,8 @@ void loop() {
     if(power == 1) {
       if(throttle > -180) {
         motorSpeed = 53;
+      } else if (throttle > ) {
+        motorSpeed = 73;
       } else {
         motorSpeed = 43;
       }
@@ -218,12 +220,7 @@ void stabilized(int motorSpeed) {
   tr = motorSpeed;
   bl = motorSpeed;
   br = motorSpeed;
-        
-  #ifdef OUTPUT_READABLE_CHANNELS
-  Serial.print("Speed: ");
-  Serial.println(motorSpeed);
-  #endif
-  
+          
   mpu.dmpGetQuaternion(&q, fifoBuffer);
   mpu.dmpGetGravity(&gravity, &q);
   mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
