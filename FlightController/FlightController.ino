@@ -97,12 +97,16 @@ void loop() {
   }
   
   if(bUpdateFlags & THROTTLE_FLAG) {
-    if(servoThrottle.readMicroseconds() != unThrottleIn) {
-      //Serial.println(unThrottleIn);
-      servoTL.writeMicroseconds(unThrottleIn);
-      servoTR.writeMicroseconds(unThrottleIn);
-      servoBL.writeMicroseconds(unThrottleIn);
-      servoBR.writeMicroseconds(unThrottleIn);
+    if(servoMotorTL.readMicroseconds() 
+      && servoMotorTR.readMicroseconds() 
+      && servoMotorBL.readMicroseconds()
+      && servoMotorBR.readMicroseconds()
+      != unThrottleIn) {
+      Serial.println(unThrottleIn);
+      servoMotorTL.writeMicroseconds(unThrottleIn);
+      servoMotorTR.writeMicroseconds(unThrottleIn);
+      servoMotorBL.writeMicroseconds(unThrottleIn);
+      servoMotorBR.writeMicroseconds(unThrottleIn);
     }
   }
   
