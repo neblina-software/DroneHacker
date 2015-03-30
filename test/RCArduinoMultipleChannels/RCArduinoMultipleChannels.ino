@@ -149,7 +149,7 @@ void loop()
   {
     if(servoThrottle.readMicroseconds() != unThrottleIn)
     {
-      Serial.println(unThrottleIn);
+      //Serial.println(unThrottleIn);
       servoThrottle.writeMicroseconds(unThrottleIn);
     }
   }
@@ -158,6 +158,7 @@ void loop()
   {
     if(servoSteering.readMicroseconds() != unSteeringIn)
     {
+      //Serial.println(unSteeringIn);
       servoSteering.writeMicroseconds(unSteeringIn);
     }
   }
@@ -166,6 +167,7 @@ void loop()
   {
     if(servoAux.readMicroseconds() != unAuxIn)
     {
+      //Serial.println(unAuxIn);
       servoAux.writeMicroseconds(unAuxIn);
     }
   }
