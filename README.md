@@ -3,8 +3,20 @@ Proyecto Drone Hacker
 
 Desarrollo del proyecto Drone Hacker.
 
+Hardware:
+
+* Arduino Uno
+* MPU-6050
+* Turnigy 5x (Rx / Tx)
+
 * FlightController -> Programa Principal
-* FlightManager -> Obsolteto
+
+Instrucciones de uso
+====================
+
+1. Conectar la bateria, debera escuchar beeps de inicializacion.
+2. Sincronizar radio control.
+3. Si el vehiculo no recibe señal, presionar el boton de reset de la placa.
 
 Prueba unitarias:
 
