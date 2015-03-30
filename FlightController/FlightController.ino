@@ -60,6 +60,7 @@ Servo servoMotorBL;
 #define THROTTLE_FLAG 1
 
 volatile uint8_t bUpdateFlagsShared;
+
 volatile uint16_t unThrottleInShared;
 
 uint32_t ulThrottleStart;
@@ -75,6 +76,8 @@ void setup(){
   servoMotorBR.attach(MOTORBR_OUT_PIN);
 
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
+  
+  arm();
 
 }
 
@@ -97,16 +100,11 @@ void loop() {
   }
   
   if(bUpdateFlags & THROTTLE_FLAG) {
-    if(servoMotorTL.readMicroseconds() 
-      && servoMotorTR.readMicroseconds() 
-      && servoMotorBL.readMicroseconds()
-      && servoMotorBR.readMicroseconds()
-      != unThrottleIn) {
-      Serial.println(unThrottleIn);
-      servoMotorTL.writeMicroseconds(unThrottleIn);
-      servoMotorTR.writeMicroseconds(unThrottleIn);
-      servoMotorBL.writeMicroseconds(unThrottleIn);
-      servoMotorBR.writeMicroseconds(unThrottleIn);
+    if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
+        && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
+        != unThrottleIn) {
+          Serial.println(unThrottleIn);
+          stabilized(unThrottleIn);
     }
   }
   
@@ -120,5 +118,19 @@ void calcThrottle() {
     unThrottleInShared = (uint16_t)(micros() - ulThrottleStart);
     bUpdateFlagsShared |= THROTTLE_FLAG;
   }
+}
+
+void arm() {
+  servoMotorTL.writeMicroseconds(1000);
+  servoMotorTR.writeMicroseconds(1000);
+  servoMotorBL.writeMicroseconds(1000);
+  servoMotorBR.writeMicroseconds(1000);
+}
+
+void stabilized(uint16_t unThrottleIn) {
+  servoMotorTL.writeMicroseconds(unThrottleIn);
+  servoMotorTR.writeMicroseconds(unThrottleIn);
+  servoMotorBL.writeMicroseconds(unThrottleIn);
+  servoMotorBR.writeMicroseconds(unThrottleIn);
 }
 
