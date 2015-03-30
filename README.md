@@ -3,12 +3,12 @@ Proyecto Drone Hacker
 
 Desarrollo del proyecto Drone Hacker.
 
-Para debuggear o hacer pruebas unitarias, cargar:
+* FlightController -> Programa Principal
+* FlightManager -> Obsolteto
 
-Archivos dentro la carpeta 'test'.
+Prueba unitarias:
 
-'test' -> Pruebas unitarias de sensores, transmisores, receptores, motores.
-'FlightManager -> Programa Principal.
+* test -> Sensores, Placas, Consola, Extensiones, Pruebas (pruebas)
 
 Notas
 =====
