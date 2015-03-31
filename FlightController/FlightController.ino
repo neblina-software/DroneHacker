@@ -114,7 +114,7 @@ void setup(){
 
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
   
-  arm();
+  //arm();
   
   mpu.initialize();
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));

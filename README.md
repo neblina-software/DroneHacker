@@ -14,9 +14,10 @@ Hardware:
 Instrucciones de uso
 ====================
 
-1. Conectar la bateria, debera escuchar beeps de inicializacion.
-2. Sincronizar radio control.
-3. Si el vehiculo no recibe señal, presionar el boton de reset de la placa.
+1. Mantener joystick Throttle (radio control) en 0 (Punto de inicio o hacia abajo)
+2. Encender radio transmisor
+3. Conectar la bateria, debera escuchar beeps de inicializacion.
+4. Si el vehiculo no recibe señal, presionar el boton de reset de la placa.
 
 Prueba unitarias:
 
