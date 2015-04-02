@@ -28,8 +28,18 @@ Prueba unitarias
 
 * test -> Sensores, Placas, Consola, Extensiones, Pruebas
 
-Notas
-=====
+Compilacion
+===========
+
+Para compilar el codigo fuente, necesitara importar todas las librerias
+que se encuentran en la carpeta /lib/.
+
+* Import -> Add Library
+
+Nota: No descomprimir las librerias, importar con extension .zip
+
+Notas generales
+===============
 
 Open Hardware y Open Source Software en español.
 
