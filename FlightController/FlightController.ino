@@ -46,6 +46,13 @@
 #include <Servo.h>
 #include "I2Cdev.h"
 
+#define THROTTLE_IN_PIN 3
+
+#define MOTORTL_OUT_PIN 8
+#define MOTORTR_OUT_PIN 9
+#define MOTORBR_OUT_PIN 11
+#define MOTORBL_OUT_PIN 13
+
 #include "MPU6050_6Axis_MotionApps20.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
@@ -68,14 +75,7 @@ VectorFloat gravity;
 float euler[3];
 float ypr[3];
 
-int yaw, pitch, roll;
-
-#define THROTTLE_IN_PIN 5
-
-#define MOTORTL_OUT_PIN 8
-#define MOTORTR_OUT_PIN 9
-#define MOTORBR_OUT_PIN 11
-#define MOTORBL_OUT_PIN 13
+int mpuYaw, mpuPitch, mpuRoll;
 
 Servo servoMotorTL;
 Servo servoMotorTR;
@@ -114,7 +114,7 @@ void setup(){
 
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
   
-  //arm();
+  arm();
   
   mpu.initialize();
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
@@ -158,6 +158,14 @@ void loop() {
         fifoCount -= packetSize;
     }
 
+  mpu.dmpGetQuaternion(&q, fifoBuffer);
+  mpu.dmpGetGravity(&gravity, &q);
+  mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+  
+  mpuYaw = ypr[0] * 180/M_PI;
+  mpuPitch = ypr[1] * 180/M_PI;
+  mpuRoll = ypr[2] * 180/M_PI;
+
   if(bUpdateFlagsShared) {
     
     noInterrupts();
@@ -175,7 +183,10 @@ void loop() {
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
           Serial.println(unThrottleIn);
-          stabilized(unThrottleIn);
+          servoMotorTL.writeMicroseconds(unThrottleIn);
+          servoMotorTR.writeMicroseconds(unThrottleIn);
+          servoMotorBL.writeMicroseconds(unThrottleIn);
+          servoMotorBR.writeMicroseconds(unThrottleIn);
     }
   }
   
@@ -192,63 +203,8 @@ void calcThrottle() {
 }
 
 void arm() {
-  servoMotorTL.writeMicroseconds(900);
-  servoMotorTR.writeMicroseconds(900);
-  servoMotorBL.writeMicroseconds(900);
-  servoMotorBR.writeMicroseconds(900);
+  servoMotorTL.writeMicroseconds(1000);
+  servoMotorTR.writeMicroseconds(1000);
+  servoMotorBL.writeMicroseconds(1000);
+  servoMotorBR.writeMicroseconds(1000);
 }
-
-void stabilized(int unThrottleIn) {
-  
-  int tl, tr, bl, br;
-  
-  tl = unThrottleIn;
-  tr = unThrottleIn;
-  bl = unThrottleIn;
-  br = unThrottleIn;
-  
-  mpu.dmpGetQuaternion(&q, fifoBuffer);
-  mpu.dmpGetGravity(&gravity, &q);
-  mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-  
-  yaw = ypr[0] * 180/M_PI;
-  pitch = ypr[1] * 180/M_PI;
-  roll = ypr[2] * 180/M_PI;
-  
-  if(unThrottleIn > 1060) {
-  
-  if(pitch > 3) {
-    tl = tl + 100;
-    bl = bl + 100;
-  }
-  
-  if(pitch < -3) {
-    tr = tr + 100;
-    br = br + 100;
-  }
-  
-  if(roll > 3) {
-    bl = bl + 100;
-    br = br + 100;
-  }
-  
-  if(roll < -3) {
-    tl = tl + 100;
-    tr = tr + 100;
-  }
-  
-  }
-  
-  //Serial.println("Valor a motor");
-  //Serial.println(tl);
-  //Serial.println(tr);
-  //Serial.println(bl);
-  //Serial.println(br);
-  
-  servoMotorTL.writeMicroseconds(tl);
-  servoMotorTR.writeMicroseconds(tr);
-  servoMotorBL.writeMicroseconds(bl);
-  servoMotorBR.writeMicroseconds(br);
-  
-}
-

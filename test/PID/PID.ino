@@ -8,24 +8,29 @@
 //Define Variables we'll be connecting to
 double Setpoint, Input, Output;
 
+int kp = 2;
+int ki = 5;
+int kd = 1;
+
 //Specify the links and initial tuning parameters
-PID myPID(&Input, &Output, &Setpoint,2,5,1, DIRECT);
+PID myPID(&Input, &Output, &Setpoint, kp, ki, kd, DIRECT);
 
 void setup()
 {
   Serial.begin(115200);
   //initialize the variables we're linked to
   Input = 0;
-  Setpoint = 100;
+  Setpoint = 0;
 
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
-  myPID.SetOutputLimits(1000, 2000);
+  myPID.SetOutputLimits(0, 170);
 }
 
 void loop()
 {
-  Input = 80;
+  Input = 90;
+  Setpoint = 100;
   myPID.Compute();
   Serial.println(Output);
 }
