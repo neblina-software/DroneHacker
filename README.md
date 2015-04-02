@@ -1,27 +1,32 @@
-Proyecto Drone Hacker
-=====================
+Proyecto Drone Hacker Shield
+============================
 
 Desarrollo del proyecto Drone Hacker.
 
-Hardware:
-
-* Arduino Uno
-* MPU-6050
-* Turnigy 5x (Rx / Tx)
+DroneHacker es una shield controladora de vuelo de desarrollo para arduino.
 
 * FlightController -> Programa Principal
 
 Instrucciones de uso
 ====================
 
-1. Mantener joystick Throttle (radio control) en 0 (Punto de inicio o hacia abajo)
-2. Encender radio transmisor
-3. Conectar la bateria, debera escuchar beeps de inicializacion.
-4. Si el vehiculo no recibe señal, presionar el boton de reset de la placa.
+1. Alimentar de energia la placa arduino
+2. Sincronizar radio transmisor / receptor
+3. Mantener joystick de velocidad (Throttle) en punto 0
+4. Conectar bateria
 
-Prueba unitarias:
+Modo calibracion
+================
 
-* test -> Sensores, Placas, Consola, Extensiones, Pruebas (pruebas)
+1. Alimentar de energia la placa arduino
+2. Sincronizar radio transmisor / receptor
+3. Mantener en punto maximo el joystick de velocidad (Throttle)
+4. Conectar bateria
+
+Prueba unitarias
+================
+
+* test -> Sensores, Placas, Consola, Extensiones, Pruebas
 
 Notas
 =====
@@ -39,7 +44,7 @@ Puedes visitar nuestra comunidad 'Balero CMS' en Google Plus,
 Arduino Mexico y Drones (desarrolladores) en Facebook.
 
 
-Licensia
+Licencia
 ========
 
 Este programa es libre siempre y cuando respetes los creditos
