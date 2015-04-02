@@ -47,6 +47,7 @@
 #include "I2Cdev.h"
 
 #define THROTTLE_IN_PIN 3
+#define PITCH_IN_PIN 4
 
 #define MOTORTL_OUT_PIN 8
 #define MOTORTR_OUT_PIN 9
@@ -75,6 +76,7 @@ VectorFloat gravity;
 float euler[3];
 float ypr[3];
 
+int tl, tr, br, bl;
 int mpuYaw, mpuPitch, mpuRoll;
 
 Servo servoMotorTL;
@@ -83,12 +85,15 @@ Servo servoMotorBR;
 Servo servoMotorBL;
 
 #define THROTTLE_FLAG 1
+#define PITCH_FLAG 1
 
 volatile uint8_t bUpdateFlagsShared;
 
 volatile uint16_t unThrottleInShared;
+volatile uint16_t unPitchInShared;
 
 uint32_t ulThrottleStart;
+uint32_t ulPitchStart;
 
 volatile bool mpuInterrupt = false;
 void dmpDataReady() {
@@ -113,6 +118,7 @@ void setup(){
   servoMotorBR.attach(MOTORBR_OUT_PIN);
 
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
+  PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch, CHANGE);
   
   arm();
   
@@ -141,6 +147,7 @@ void setup(){
 void loop() {
   
   static uint16_t unThrottleIn;
+  static uint16_t unPitchIn;
 
   static uint8_t bUpdateFlags;
 
@@ -170,9 +177,14 @@ void loop() {
     
     noInterrupts();
     bUpdateFlags = bUpdateFlagsShared;
+    
     if(bUpdateFlags & THROTTLE_FLAG) {
       unThrottleIn = unThrottleInShared;
     }
+    if(bUpdateFlags & PITCH_FLAG) {
+      unPitchIn = unPitchInShared;
+    }
+    
     bUpdateFlagsShared = 0;
     interrupts();
     
@@ -183,14 +195,25 @@ void loop() {
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
           Serial.println(unThrottleIn);
-          servoMotorTL.writeMicroseconds(unThrottleIn);
-          servoMotorTR.writeMicroseconds(unThrottleIn);
-          servoMotorBL.writeMicroseconds(unThrottleIn);
-          servoMotorBR.writeMicroseconds(unThrottleIn);
+          tr = unThrottleIn;
+          tl = unThrottleIn;
+          bl = unThrottleIn;
+          br = unThrottleIn;
     }
   }
   
+  if(bUpdateFlags & PITCH_FLAG) {
+    if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
+        && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
+        != unPitchIn) {
+          //Serial.println(unPitchIn);
+    }
+  }
+
+  initMotors(tl, tr, br, bl);
+  
   bUpdateFlags = 0;
+  
 }
 
 void calcThrottle() {
@@ -202,9 +225,25 @@ void calcThrottle() {
   }
 }
 
+void calcPitch() {
+  if(digitalRead(PITCH_IN_PIN) == HIGH) { 
+    ulPitchStart = micros();
+  } else{
+    unPitchInShared = (uint16_t)(micros() - ulPitchStart);
+    bUpdateFlagsShared |= PITCH_FLAG;
+  }
+}
+
 void arm() {
   servoMotorTL.writeMicroseconds(1000);
   servoMotorTR.writeMicroseconds(1000);
   servoMotorBL.writeMicroseconds(1000);
   servoMotorBR.writeMicroseconds(1000);
+}
+
+void initMotors(int tl, int tr, int br, int bl) {
+  servoMotorTL.writeMicroseconds(tl);
+  servoMotorTR.writeMicroseconds(tr);
+  servoMotorBL.writeMicroseconds(br);
+  servoMotorBR.writeMicroseconds(bl);
 }
