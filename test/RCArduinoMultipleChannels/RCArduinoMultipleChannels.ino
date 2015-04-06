@@ -18,9 +18,9 @@
 #include <Servo.h>
 
 // Assign your channel in pins
-#define THROTTLE_IN_PIN 5
+#define THROTTLE_IN_PIN 4
 #define STEERING_IN_PIN 3
-#define AUX_IN_PIN 4
+#define AUX_IN_PIN 5
 
 // Assign your channel out pins
 #define THROTTLE_OUT_PIN 13
@@ -69,9 +69,9 @@ void setup()
   // attach servo objects, these will generate the correct 
   // pulses for driving Electronic speed controllers, servos or other devices
   // designed to interface directly with RC Receivers  
-  servoThrottle.attach(THROTTLE_OUT_PIN);
-  servoSteering.attach(STEERING_OUT_PIN);
-  servoAux.attach(AUX_OUT_PIN);
+  //servoThrottle.attach(THROTTLE_OUT_PIN);
+  //servoSteering.attach(STEERING_OUT_PIN);
+  //servoAux.attach(AUX_OUT_PIN);
 
   // using the PinChangeInt library, attach the interrupts
   // used to read the channels
@@ -149,8 +149,8 @@ void loop()
   {
     if(servoThrottle.readMicroseconds() != unThrottleIn)
     {
-      //Serial.println(unThrottleIn);
-      servoThrottle.writeMicroseconds(unThrottleIn);
+      Serial.println(unThrottleIn);
+      //servoThrottle.writeMicroseconds(unThrottleIn);
     }
   }
   
@@ -159,7 +159,7 @@ void loop()
     if(servoSteering.readMicroseconds() != unSteeringIn)
     {
       //Serial.println(unSteeringIn);
-      servoSteering.writeMicroseconds(unSteeringIn);
+      //servoSteering.writeMicroseconds(unSteeringIn);
     }
   }
   
@@ -168,7 +168,7 @@ void loop()
     if(servoAux.readMicroseconds() != unAuxIn)
     {
       //Serial.println(unAuxIn);
-      servoAux.writeMicroseconds(unAuxIn);
+      //servoAux.writeMicroseconds(unAuxIn);
     }
   }
   

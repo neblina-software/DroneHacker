@@ -29,8 +29,8 @@ void setup()
 
 void loop()
 {
-  Input = 90;
-  Setpoint = 100;
+  Input = 0;
+  Setpoint = 30;
   myPID.Compute();
   Serial.println(Output);
 }

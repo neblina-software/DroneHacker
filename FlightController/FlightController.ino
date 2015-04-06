@@ -45,6 +45,15 @@
 #include <PinChangeInt.h>
 #include <Servo.h>
 #include "I2Cdev.h"
+#include <PID_v1.h>
+
+double Setpoint, Input, Output;
+
+int kp = 2;
+int ki = 5;
+int kd = 1;
+
+PID myPID(&Input, &Output, &Setpoint, kp, ki, kd, DIRECT);
 
 #define THROTTLE_IN_PIN 3
 #define PITCH_IN_PIN 4
@@ -76,7 +85,7 @@ VectorFloat gravity;
 float euler[3];
 float ypr[3];
 
-int tl, tr, br, bl;
+int outputTL, outputTR, outputBR, outputBL, auxTL, auxTR, auxBR, auxBL;
 int mpuYaw, mpuPitch, mpuRoll;
 
 Servo servoMotorTL;
@@ -142,6 +151,11 @@ void setup(){
         Serial.println(F(")"));
     }
 
+  //Input = 0;
+  //Setpoint = 0;
+  myPID.SetMode(AUTOMATIC);
+  //myPID.SetOutputLimits(-30, 30);
+
 }
 
 void loop() {
@@ -194,11 +208,15 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
-          Serial.println(unThrottleIn);
-          tr = unThrottleIn;
-          tl = unThrottleIn;
-          bl = unThrottleIn;
-          br = unThrottleIn;
+          //Serial.println(unThrottleIn);
+          outputTR = unThrottleIn;
+          outputTL = unThrottleIn;
+          outputBL = unThrottleIn;
+          outputBR = unThrottleIn;
+          auxTR = unThrottleIn;
+          auxTL = unThrottleIn;
+          auxBL = unThrottleIn;
+          auxBR = unThrottleIn;
     }
   }
   
@@ -207,10 +225,32 @@ void loop() {
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unPitchIn) {
           //Serial.println(unPitchIn);
+          if(unPitchIn > 1550) {
+            Setpoint = map(unPitchIn, 1550, 2000, 0, 30);
+            myPID.Compute();
+            outputTL = auxTL + Output;
+            outputBL = auxBL + Output;
+          }
+          if(unPitchIn < 1450) {
+            Setpoint = map(unPitchIn, 1000, 1450, 0, 30);
+            myPID.Compute();
+            outputTR = auxTR + Output;
+            outputBR = auxBR + Output;
+          }    
+          if(unPitchIn > 1450 || unPitchIn < 1550) {
+              Setpoint = 0;
+              myPID.Compute();
+          }   
     }
   }
 
-  initMotors(tl, tr, br, bl);
+  initMotors(
+            outputTL,
+            outputTR,
+            outputBR,
+            outputBL
+  );
+  
   
   bUpdateFlags = 0;
   
@@ -242,8 +282,14 @@ void arm() {
 }
 
 void initMotors(int tl, int tr, int br, int bl) {
+  
+  Serial.println(tl);
+  Serial.println(tr);
+  Serial.println(br);
+  Serial.println(bl);
+  
   servoMotorTL.writeMicroseconds(tl);
   servoMotorTR.writeMicroseconds(tr);
-  servoMotorBL.writeMicroseconds(br);
-  servoMotorBR.writeMicroseconds(bl);
+  servoMotorBR.writeMicroseconds(br);
+  servoMotorBL.writeMicroseconds(bl);
 }
