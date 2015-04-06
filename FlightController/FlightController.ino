@@ -244,6 +244,18 @@ void loop() {
     }
   }
 
+  // -- Stabilizer --
+
+  if(mpuPitch > 3 && unThrottleIn > 1060) {
+    outputTL = auxTL + (mpuPitch + 50);
+    outputBL = auxBL + (mpuPitch + 50);
+  }
+  
+  if(mpuPitch < -3 && unThrottleIn > 1060) {
+    outputTR = auxTR + (abs(mpuPitch) + 50);
+    outputBR = auxBR + (abs(mpuPitch) + 50);
+  }
+  
   initMotors(
             outputTL,
             outputTR,
