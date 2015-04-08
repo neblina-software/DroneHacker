@@ -25,7 +25,7 @@
 * ==============
 * 
 * - Si desea contribuir con el programa, por favor:
-* - No comente ninguna linea de codigo
+* - Evitar lo mas posible los comentarios en el codigo
 * - Envie su documentacion externa, en la carpeta, /docs/
 * - Use estandares de convencion
 * - Use variables lo mas descriptivas posibles
@@ -52,21 +52,52 @@
     #include "Wire.h"
 #endif
 
-int kp = 2;
-int ki = 5;
-int kd = 1;
-
-double pitchSetpoint, pitchInput, pitchOutput;
-
-PID pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, kp, ki, kd, DIRECT);
+/**************
+*     RX/TX   *
+*     PINS    *
+**************/
 
 #define THROTTLE_IN_PIN 3
 #define PITCH_IN_PIN 4
+
+/**************
+*     SERVO   *
+*     PINS    *
+**************/
 
 #define MOTORTL_OUT_PIN 8
 #define MOTORTR_OUT_PIN 9
 #define MOTORBR_OUT_PIN 11
 #define MOTORBL_OUT_PIN 13
+
+Servo servoMotorTL;
+Servo servoMotorTR;
+Servo servoMotorBR;
+Servo servoMotorBL;
+
+/**************
+*     PID     *
+**************/
+
+int kp = 2;
+int ki = 5;
+int kd = 1;
+
+double pitchSetpoint, pitchInput, pitchOutput;
+double rollSetpoint, rollInput, rollOutput;
+
+/**************
+*   X: Pitch  *
+*   Y: Roll   *
+*   Z: Yaw    *
+**************/
+
+PID pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, kp, ki, kd, DIRECT);
+PID rollPID(&rollInput, &rollOutput, &rollSetpoint, kp, ki, kd, DIRECT);
+
+/**************
+*     MPU     *
+**************/
 
 MPU6050 mpu;
 
@@ -88,10 +119,9 @@ float ypr[3];
 int outputTL, outputTR, outputBR, outputBL, auxTL, auxTR, auxBR, auxBL;
 int mpuYaw, mpuPitch, mpuRoll;
 
-Servo servoMotorTL;
-Servo servoMotorTR;
-Servo servoMotorBR;
-Servo servoMotorBL;
+/**************
+*    RX/TX    *
+**************/
 
 #define THROTTLE_FLAG 1
 #define PITCH_FLAG 1
@@ -111,12 +141,22 @@ void dmpDataReady() {
 
 void setup(){
   
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-        Wire.begin();
-        TWBR = 24;
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-        Fastwire::setup(400, true);
-    #endif
+  /*****************
+  *       PID      *
+  * INITIALIZATION *
+  ******************/
+  //Input = 0;
+  //Setpoint = 0;
+  pitchPID.SetMode(AUTOMATIC);
+  rollPID.SetMode(AUTOMATIC);
+  //myPID.SetOutputLimits(0, 100);
+  
+  #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+      Wire.begin();
+      TWBR = 24;
+  #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+      Fastwire::setup(400, true);
+  #endif
     
   Serial.begin(115200);
   Serial.println("multiChannels");
@@ -151,11 +191,6 @@ void setup(){
         Serial.println(F(")"));
     }
 
-  //Input = 0;
-  //Setpoint = 0;
-  pitchPID.SetMode(AUTOMATIC);
-  //myPID.SetOutputLimits(0, 100);
-
 }
 
 void loop() {
@@ -186,7 +221,6 @@ void loop() {
   mpuYaw = ypr[0] * 180/M_PI;
   mpuPitch = ypr[1] * 180/M_PI;
   mpuRoll = ypr[2] * 180/M_PI;
- 
 
   if(bUpdateFlagsShared) {
     
@@ -209,10 +243,6 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
-          // Stabilizer
-          pitchInput = 3; // Not less than 3 or not equals to 0
-          pitchSetpoint = abs(mpuPitch);
-          pitchPID.Compute();
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
           outputBL = unThrottleIn;
@@ -221,6 +251,15 @@ void loop() {
           auxTL = unThrottleIn;
           auxBL = unThrottleIn;
           auxBR = unThrottleIn;
+          /*************
+          * Stabilizer *
+          **************/
+          pitchInput = 3; // Not less than 3 or not equals to 0
+          pitchSetpoint = abs(mpuPitch);
+          pitchPID.Compute();
+          rollInput = 3; // Not less than 3 or not equals to 0
+          rollSetpoint = abs(mpuRoll);
+          rollPID.Compute();
           if(mpuPitch > 3) {
              outputTL = unThrottleIn + pitchOutput;
              outputBL = unThrottleIn + pitchOutput;
@@ -228,6 +267,14 @@ void loop() {
           if(mpuPitch < -3) {
              outputTR = unThrottleIn + pitchOutput;
              outputBR = unThrottleIn + pitchOutput;
+          }
+          if(mpuRoll > 3) {
+             outputBL = unThrottleIn + rollOutput;
+             outputBR = unThrottleIn + rollOutput;
+          }
+          if(mpuRoll < -3) {
+             outputTL = unThrottleIn + rollOutput;
+             outputTR = unThrottleIn + rollOutput;
           }
     }
   }
