@@ -47,13 +47,18 @@
 #include "I2Cdev.h"
 #include <PID_v1.h>
 
-double Setpoint, Input, Output;
+#include "MPU6050_6Axis_MotionApps20.h"
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    #include "Wire.h"
+#endif
 
 int kp = 2;
 int ki = 5;
 int kd = 1;
 
-PID myPID(&Input, &Output, &Setpoint, kp, ki, kd, DIRECT);
+double pitchSetpoint, pitchInput, pitchOutput;
+
+PID pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, kp, ki, kd, DIRECT);
 
 #define THROTTLE_IN_PIN 3
 #define PITCH_IN_PIN 4
@@ -62,11 +67,6 @@ PID myPID(&Input, &Output, &Setpoint, kp, ki, kd, DIRECT);
 #define MOTORTR_OUT_PIN 9
 #define MOTORBR_OUT_PIN 11
 #define MOTORBL_OUT_PIN 13
-
-#include "MPU6050_6Axis_MotionApps20.h"
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
-#endif
 
 MPU6050 mpu;
 
@@ -153,7 +153,7 @@ void setup(){
 
   //Input = 0;
   //Setpoint = 0;
-  myPID.SetMode(AUTOMATIC);
+  pitchPID.SetMode(AUTOMATIC);
   //myPID.SetOutputLimits(0, 100);
 
 }
@@ -209,13 +209,10 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
-              // -- Stabilizer --
-    Input = 3; // Not less than 3 or not equals to 0
-    Setpoint = abs(mpuPitch);
-    myPID.Compute();
-        //Serial.println(Output);
-        //Serial.println(Setpoint);
-          //Serial.println(unThrottleIn);
+          // Stabilizer
+          pitchInput = 3; // Not less than 3 or not equals to 0
+          pitchSetpoint = abs(mpuPitch);
+          pitchPID.Compute();
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
           outputBL = unThrottleIn;
@@ -225,12 +222,12 @@ void loop() {
           auxBL = unThrottleIn;
           auxBR = unThrottleIn;
           if(mpuPitch > 3) {
-             outputTL = unThrottleIn + Output;
-             outputBL = unThrottleIn + Output;
+             outputTL = unThrottleIn + pitchOutput;
+             outputBL = unThrottleIn + pitchOutput;
           }
           if(mpuPitch < -3) {
-             outputTR = unThrottleIn + Output;
-             outputBR = unThrottleIn + Output;
+             outputTR = unThrottleIn + pitchOutput;
+             outputBR = unThrottleIn + pitchOutput;
           }
     }
   }
@@ -241,51 +238,23 @@ void loop() {
         != unPitchIn) {
           //Serial.println(unPitchIn);
           if(unPitchIn > 1550) {
-            Setpoint = map(unPitchIn, 1550, 2000, 0, 30);
-            myPID.Compute();
-            outputTL = auxTL + Output;
-            outputBL = auxBL + Output;
+            pitchSetpoint = map(unPitchIn, 1550, 2000, 0, 30);
+            pitchPID.Compute();
+            outputTL = auxTL + pitchOutput;
+            outputBL = auxBL + pitchOutput;
           }
           if(unPitchIn < 1450) {
-            Setpoint = map(unPitchIn, 1000, 1450, 0, 30);
-            myPID.Compute();
-            outputTR = auxTR + Output;
-            outputBR = auxBR + Output;
+            pitchSetpoint = map(unPitchIn, 1000, 1450, 0, 30);
+            pitchPID.Compute();
+            outputTR = auxTR + pitchOutput;
+            outputBR = auxBR + pitchOutput;
           }    
           if(unPitchIn > 1450 || unPitchIn < 1550) {
-              Setpoint = 0;
-              myPID.Compute();
+              pitchSetpoint = 0;
+              pitchPID.Compute();
           }   
     }
   }
-  
-         /**   
-  if(mpuPitch > 3 && unThrottleIn > 1060) {
-    outputTL = auxTL + (mpuPitch + 50);
-    outputBL = auxBL + (mpuPitch + 50);
-  }
-  
-  if(mpuPitch < -3 && unThrottleIn > 1060) {
-    outputTR = auxTR + (abs(mpuPitch) + 50);
-    outputBR = auxBR + (abs(mpuPitch) + 50);
-  }
-  **/
-    
-    /**
-  if(mpuPitch < 0) {
-    Setpoint = abs(mpuPitch);
-    myPID.Compute();
-    outputTL = auxTL + Output;
-    outputBL = auxBL + Output;
-  }
-  **/
-  
-    //outputTR = auxTR + Output;
-    //outputBR = auxBR + Output;
-  
-  //Serial.println(Setpoint);
-  //Serial.println(Output);
- 
   
   initMotors(
             outputTL,
@@ -293,7 +262,6 @@ void loop() {
             outputBR,
             outputBL
   );
-  
   
   bUpdateFlags = 0;
   
@@ -335,4 +303,5 @@ void initMotors(int tl, int tr, int br, int bl) {
   servoMotorTR.writeMicroseconds(tr);
   servoMotorBR.writeMicroseconds(br);
   servoMotorBL.writeMicroseconds(bl);
+  
 }
