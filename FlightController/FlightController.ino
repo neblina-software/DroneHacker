@@ -149,7 +149,8 @@ void setup(){
   //Setpoint = 0;
   pitchPID.SetMode(AUTOMATIC);
   rollPID.SetMode(AUTOMATIC);
-  //myPID.SetOutputLimits(0, 100);
+  //pitchPID.SetOutputLimits(0, 200);
+  //rollPID.SetOutputLimits(0, 200);
   
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
       Wire.begin();
@@ -295,11 +296,13 @@ void loop() {
             pitchPID.Compute();
             outputTR = auxTR + pitchOutput;
             outputBR = auxBR + pitchOutput;
-          }    
+          }
+          /**
           if(unPitchIn > 1450 || unPitchIn < 1550) {
               pitchSetpoint = 0;
               pitchPID.Compute();
-          }   
+          }
+          **/
     }
   }
   
