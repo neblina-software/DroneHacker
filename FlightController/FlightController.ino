@@ -154,7 +154,7 @@ void setup(){
   //Input = 0;
   //Setpoint = 0;
   myPID.SetMode(AUTOMATIC);
-  //myPID.SetOutputLimits(-30, 30);
+  //myPID.SetOutputLimits(0, 100);
 
 }
 
@@ -186,6 +186,7 @@ void loop() {
   mpuYaw = ypr[0] * 180/M_PI;
   mpuPitch = ypr[1] * 180/M_PI;
   mpuRoll = ypr[2] * 180/M_PI;
+ 
 
   if(bUpdateFlagsShared) {
     
@@ -203,11 +204,17 @@ void loop() {
     interrupts();
     
   }
-  
+          
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
+              // -- Stabilizer --
+    Input = 3; // Not less than 3 or not equals to 0
+    Setpoint = abs(mpuPitch);
+    myPID.Compute();
+        //Serial.println(Output);
+        //Serial.println(Setpoint);
           //Serial.println(unThrottleIn);
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
@@ -217,6 +224,14 @@ void loop() {
           auxTL = unThrottleIn;
           auxBL = unThrottleIn;
           auxBR = unThrottleIn;
+          if(mpuPitch > 3) {
+             outputTL = unThrottleIn + Output;
+             outputBL = unThrottleIn + Output;
+          }
+          if(mpuPitch < -3) {
+             outputTR = unThrottleIn + Output;
+             outputBR = unThrottleIn + Output;
+          }
     }
   }
   
@@ -243,9 +258,8 @@ void loop() {
           }   
     }
   }
-
-  // -- Stabilizer --
-
+  
+         /**   
   if(mpuPitch > 3 && unThrottleIn > 1060) {
     outputTL = auxTL + (mpuPitch + 50);
     outputBL = auxBL + (mpuPitch + 50);
@@ -255,6 +269,23 @@ void loop() {
     outputTR = auxTR + (abs(mpuPitch) + 50);
     outputBR = auxBR + (abs(mpuPitch) + 50);
   }
+  **/
+    
+    /**
+  if(mpuPitch < 0) {
+    Setpoint = abs(mpuPitch);
+    myPID.Compute();
+    outputTL = auxTL + Output;
+    outputBL = auxBL + Output;
+  }
+  **/
+  
+    //outputTR = auxTR + Output;
+    //outputBR = auxBR + Output;
+  
+  //Serial.println(Setpoint);
+  //Serial.println(Output);
+ 
   
   initMotors(
             outputTL,
