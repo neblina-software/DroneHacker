@@ -52,6 +52,12 @@
     #include "Wire.h"
 #endif
 
+/****************
+* STABILIZER AT *
+****************/
+
+#define MPU_STABILIZER_ACTIVATION 1
+
 /**************
 *     RX/TX   *
 *     PINS    *
@@ -255,25 +261,25 @@ void loop() {
           /*************
           * Stabilizer *
           **************/
-          pitchInput = 3; // Not less than 3 or not equals to 0
+          pitchInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
           pitchSetpoint = abs(mpuPitch);
           pitchPID.Compute();
-          rollInput = 3; // Not less than 3 or not equals to 0
+          rollInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
           rollSetpoint = abs(mpuRoll);
           rollPID.Compute();
-          if(mpuPitch > 3) {
+          if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
              outputTL = unThrottleIn + pitchOutput;
              outputBL = unThrottleIn + pitchOutput;
           }
-          if(mpuPitch < -3) {
+          if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
              outputTR = unThrottleIn + pitchOutput;
              outputBR = unThrottleIn + pitchOutput;
           }
-          if(mpuRoll > 3) {
+          if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
              outputBL = unThrottleIn + rollOutput;
              outputBR = unThrottleIn + rollOutput;
           }
-          if(mpuRoll < -3) {
+          if(mpuRoll < -MPU_STABILIZER_ACTIVATION) {
              outputTL = unThrottleIn + rollOutput;
              outputTR = unThrottleIn + rollOutput;
           }
