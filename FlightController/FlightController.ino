@@ -63,7 +63,7 @@ int power = 0;
 * STABILIZER AT *
 ****************/
 
-#define MPU_STABILIZER_ACTIVATION 2
+#define MPU_STABILIZER_ACTIVATION 1
 
 /**************
 *     RX/TX   *
@@ -88,12 +88,16 @@ Servo servoMotorTR;
 Servo servoMotorBR;
 Servo servoMotorBL;
 
-/**************
-*     PID     *
-**************/
+/*************************
+*          PID           *
+*       CALIBRATION      *
+* kp = Proportional term *
+* ki = Integral term     *
+* kd = Derivative term   *
+*************************/
 
-int kp = 2;
-int ki = 5;
+int kp = 7;
+int ki = 2;
 int kd = 1;
 
 double pitchSetpoint, pitchInput, pitchOutput;
@@ -162,8 +166,8 @@ void setup(){
   //Setpoint = 0;
   pitchPID.SetMode(AUTOMATIC);
   rollPID.SetMode(AUTOMATIC);
-  //pitchPID.SetOutputLimits(0, 200);
-  //rollPID.SetOutputLimits(0, 200);
+  pitchPID.SetOutputLimits(0, 200);
+  rollPID.SetOutputLimits(0, 200);
   
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
       Wire.begin();
@@ -272,6 +276,16 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
+          if(unThrottleIn > 1745) {
+            outputTR = 1745;
+            outputTL = 1745;
+            outputBL = 1745;
+            outputBR = 1745;
+            auxTR = 1745;
+            auxTL = 1745;
+            auxBL = 1745;
+            auxBR = 1745;
+          }
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
           outputBL = unThrottleIn;
@@ -283,27 +297,29 @@ void loop() {
           /*************
           * Stabilizer *
           **************/
-          pitchInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
-          pitchSetpoint = abs(mpuPitch);
-          pitchPID.Compute();
-          rollInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
-          rollSetpoint = abs(mpuRoll);
-          rollPID.Compute();
-          if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
-             outputTL = unThrottleIn + pitchOutput;
-             outputBL = unThrottleIn + pitchOutput;
-          }
-          if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
-             outputTR = unThrottleIn + pitchOutput;
-             outputBR = unThrottleIn + pitchOutput;
-          }
-          if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
-             outputBL = unThrottleIn + rollOutput;
-             outputBR = unThrottleIn + rollOutput;
-          }
-          if(mpuRoll < -MPU_STABILIZER_ACTIVATION) {
-             outputTL = unThrottleIn + rollOutput;
-             outputTR = unThrottleIn + rollOutput;
+          if(unThrottleIn > 1060) {
+            pitchInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
+            pitchSetpoint = abs(mpuPitch);
+            pitchPID.Compute();
+            rollInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
+            rollSetpoint = abs(mpuRoll);
+            rollPID.Compute();
+            if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
+               outputTL = unThrottleIn + pitchOutput;
+               outputBL = unThrottleIn + pitchOutput;
+            }
+            if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
+               outputTR = unThrottleIn + pitchOutput;
+               outputBR = unThrottleIn + pitchOutput;
+            }
+            if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
+               outputBL = unThrottleIn + rollOutput;
+               outputBR = unThrottleIn + rollOutput;
+            }
+            if(mpuRoll < -MPU_STABILIZER_ACTIVATION) {
+               outputTL = unThrottleIn + rollOutput;
+               outputTR = unThrottleIn + rollOutput;
+            }
           }
     }
   }
@@ -371,7 +387,7 @@ void arm() {
 }
 
 void initMotors(int tl, int tr, int br, int bl) {
-  
+    
   Serial.println(tl);
   Serial.println(tr);
   Serial.println(br);
