@@ -52,11 +52,18 @@
     #include "Wire.h"
 #endif
 
+/**************
+*    SIGNAL   *
+*    CHECKER  *
+**************/
+
+int power = 0;
+
 /****************
 * STABILIZER AT *
 ****************/
 
-#define MPU_STABILIZER_ACTIVATION 1
+#define MPU_STABILIZER_ACTIVATION 2
 
 /**************
 *     RX/TX   *
@@ -201,7 +208,7 @@ void setup(){
 }
 
 void loop() {
-  
+    
   static uint16_t unThrottleIn;
   static uint16_t unPitchIn;
 
@@ -231,6 +238,7 @@ void loop() {
 
   if(bUpdateFlagsShared) {
     
+    power = 0;
     noInterrupts();
     bUpdateFlags = bUpdateFlagsShared;
     
@@ -245,7 +253,21 @@ void loop() {
     interrupts();
     
   }
-          
+   
+  if(!bUpdateFlags) {
+    // Iniciar contador
+    power++;
+  }
+  
+  if(power > 2) {
+    Serial.println("No Signal!");
+    outputTL = 1000;
+    outputTR = 1000;
+    outputBL = 1000;
+    outputBR = 1000;
+    delay(500);
+  }
+  
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
