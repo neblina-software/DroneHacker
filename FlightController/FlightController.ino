@@ -52,6 +52,9 @@
     #include "Wire.h"
 #endif
 
+int outputTL, outputTR, outputBR, outputBL, auxTL, auxTR, auxBR, auxBL;
+int mpuYaw, mpuPitch, mpuRoll;
+
 /**************
 *    SIGNAL   *
 *    CHECKER  *
@@ -96,9 +99,16 @@ Servo servoMotorBL;
 * kd = Derivative term   *
 *************************/
 
-int kp = 7;
-int ki = 2;
-int kd = 1;
+float kp = 11;
+float ki = 0.5;
+float kd = 2;
+
+/*************************
+*          PID           *
+*         LIMITS         *
+*************************/
+
+#define OUTPUT_LIMITS 50
 
 double pitchSetpoint, pitchInput, pitchOutput;
 double rollSetpoint, rollInput, rollOutput;
@@ -133,9 +143,6 @@ VectorFloat gravity;
 float euler[3];
 float ypr[3];
 
-int outputTL, outputTR, outputBR, outputBL, auxTL, auxTR, auxBR, auxBL;
-int mpuYaw, mpuPitch, mpuRoll;
-
 /**************
 *    RX/TX    *
 **************/
@@ -166,8 +173,8 @@ void setup(){
   //Setpoint = 0;
   pitchPID.SetMode(AUTOMATIC);
   rollPID.SetMode(AUTOMATIC);
-  pitchPID.SetOutputLimits(0, 200);
-  rollPID.SetOutputLimits(0, 200);
+  pitchPID.SetOutputLimits(0, OUTPUT_LIMITS);
+  rollPID.SetOutputLimits(0, OUTPUT_LIMITS);
   
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
       Wire.begin();
@@ -276,16 +283,18 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
-          if(unThrottleIn > 1745) {
-            outputTR = 1745;
-            outputTL = 1745;
-            outputBL = 1745;
-            outputBR = 1745;
-            auxTR = 1745;
-            auxTL = 1745;
-            auxBL = 1745;
-            auxBR = 1745;
+          /**
+          if(unThrottleIn > (2000-OUTPUT_LIMITS)) {
+            outputTR = (2000-OUTPUT_LIMITS);
+            outputTL = (2000-OUTPUT_LIMITS);
+            outputBL = (2000-OUTPUT_LIMITS);
+            outputBR = (2000-OUTPUT_LIMITS);
+            auxTR = (2000-OUTPUT_LIMITS);
+            auxTL = (2000-OUTPUT_LIMITS);
+            auxBL = (2000-OUTPUT_LIMITS);
+            auxBR = (2000-OUTPUT_LIMITS);
           }
+          **/
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
           outputBL = unThrottleIn;
@@ -297,21 +306,24 @@ void loop() {
           /*************
           * Stabilizer *
           **************/
-          if(unThrottleIn > 1060) {
-            pitchInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
-            pitchSetpoint = abs(mpuPitch);
+          //if(unThrottleIn > 1100) {
+            pitchInput = -(abs(mpuPitch)); // Not less than 3 or not equals to 0
+            pitchSetpoint = 0;
             pitchPID.Compute();
-            rollInput = MPU_STABILIZER_ACTIVATION; // Not less than 3 or not equals to 0
-            rollSetpoint = abs(mpuRoll);
+            //Serial.println(pitchOutput);
+            rollInput = -(abs(mpuRoll));; // Not less than 3 or not equals to 0
+            //rollSetpoint = abs(mpuRoll);
             rollPID.Compute();
+            //Serial.println(rollOutput);
             if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
-               outputTL = unThrottleIn + pitchOutput;
-               outputBL = unThrottleIn + pitchOutput;
+               auxTL = unThrottleIn + pitchOutput;
+               auxBL = unThrottleIn + pitchOutput;
             }
             if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
-               outputTR = unThrottleIn + pitchOutput;
-               outputBR = unThrottleIn + pitchOutput;
+               auxTR = unThrottleIn + pitchOutput;
+               auxBR = unThrottleIn + pitchOutput;
             }
+            /**
             if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
                outputBL = unThrottleIn + rollOutput;
                outputBR = unThrottleIn + rollOutput;
@@ -320,7 +332,8 @@ void loop() {
                outputTL = unThrottleIn + rollOutput;
                outputTR = unThrottleIn + rollOutput;
             }
-          }
+            **/
+          //}
     }
   }
   
@@ -341,12 +354,12 @@ void loop() {
             outputTR = auxTR + pitchOutput;
             outputBR = auxBR + pitchOutput;
           }
-          /**
           if(unPitchIn > 1450 || unPitchIn < 1550) {
-              pitchSetpoint = 0;
-              pitchPID.Compute();
+              outputTL = auxTL;
+              outputTR = auxTR;
+              outputBR = auxBR;
+              outputBL = auxBL;
           }
-          **/
     }
   }
   
