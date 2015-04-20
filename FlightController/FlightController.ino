@@ -66,7 +66,7 @@ int power = 0;
 * STABILIZER AT *
 ****************/
 
-#define MPU_STABILIZER_ACTIVATION 1
+#define MPU_STABILIZER_ACTIVATION 2
 
 /**************
 *     RX/TX   *
@@ -99,16 +99,16 @@ Servo servoMotorBL;
 * kd = Derivative term   *
 *************************/
 
-float kp = 11;
-float ki = 0.5;
-float kd = 2;
+float kp = 95;
+float ki = 95;
+float kd = 95;
 
 /*************************
 *          PID           *
 *         LIMITS         *
 *************************/
 
-#define OUTPUT_LIMITS 50
+#define OUTPUT_LIMITS 100
 
 double pitchSetpoint, pitchInput, pitchOutput;
 double rollSetpoint, rollInput, rollOutput;
@@ -312,27 +312,33 @@ void loop() {
             pitchPID.Compute();
             //Serial.println(pitchOutput);
             rollInput = -(abs(mpuRoll));; // Not less than 3 or not equals to 0
-            //rollSetpoint = abs(mpuRoll);
+            rollSetpoint = 0;
             rollPID.Compute();
             //Serial.println(rollOutput);
             if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
+               outputTL = unThrottleIn + pitchOutput;
+               outputBL = unThrottleIn + pitchOutput;
                auxTL = unThrottleIn + pitchOutput;
                auxBL = unThrottleIn + pitchOutput;
             }
             if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
+               outputTR = unThrottleIn + pitchOutput;
+               outputBR = unThrottleIn + pitchOutput;
                auxTR = unThrottleIn + pitchOutput;
                auxBR = unThrottleIn + pitchOutput;
             }
-            /**
             if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
                outputBL = unThrottleIn + rollOutput;
                outputBR = unThrottleIn + rollOutput;
+               auxBL = unThrottleIn + rollOutput;
+               auxBR = unThrottleIn + rollOutput;
             }
             if(mpuRoll < -MPU_STABILIZER_ACTIVATION) {
                outputTL = unThrottleIn + rollOutput;
                outputTR = unThrottleIn + rollOutput;
+               auxTL = unThrottleIn + rollOutput;
+               auxTR = unThrottleIn + rollOutput;
             }
-            **/
           //}
     }
   }
@@ -342,6 +348,7 @@ void loop() {
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unPitchIn) {
           //Serial.println(unPitchIn);
+          //pitchInput = -(abs(mpuPitch));
           if(unPitchIn > 1550) {
             pitchSetpoint = map(unPitchIn, 1550, 2000, 0, 30);
             pitchPID.Compute();
@@ -351,18 +358,22 @@ void loop() {
           if(unPitchIn < 1450) {
             pitchSetpoint = map(unPitchIn, 1000, 1450, 0, 30);
             pitchPID.Compute();
-            outputTR = auxTR + pitchOutput;
-            outputBR = auxBR + pitchOutput;
+            outputTR = outputTR + pitchOutput;
+            auxBR = outputBR + pitchOutput;
           }
+          /*
+          *
+          
           if(unPitchIn > 1450 || unPitchIn < 1550) {
               outputTL = auxTL;
               outputTR = auxTR;
               outputBR = auxBR;
               outputBL = auxBL;
           }
+          **/
     }
   }
-  
+    
   initMotors(
             outputTL,
             outputTR,
