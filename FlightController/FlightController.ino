@@ -358,8 +358,8 @@ void loop() {
           if(unPitchIn < 1450) {
             pitchSetpoint = map(unPitchIn, 1000, 1450, 0, 30);
             pitchPID.Compute();
-            outputTR = outputTR + pitchOutput;
-            auxBR = outputBR + pitchOutput;
+            outputTR = auxTR + pitchOutput;
+            outputBR = auxBR + pitchOutput;
           }
           /*
           *
