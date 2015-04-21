@@ -99,16 +99,16 @@ Servo servoMotorBL;
 * kd = Derivative term   *
 *************************/
 
-float kp = 45;
-float ki = 45;
-float kd = 45;
+float kp = 25;
+float ki = 25;
+float kd = 25;
 
 /*************************
 *          PID           *
 *         LIMITS         *
 *************************/
 
-#define OUTPUT_LIMITS 50
+#define OUTPUT_LIMITS 30
 
 double pitchSetpoint, pitchInput, pitchOutput;
 double rollSetpoint, rollInput, rollOutput;
