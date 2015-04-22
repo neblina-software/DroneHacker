@@ -302,7 +302,7 @@ const unsigned char dmpConfig[MPU6050_DMP_CONFIG_SIZE] PROGMEM = {
     0x07,   0x46,   0x01,   0x9A,                     // CFG_GYRO_SOURCE inv_send_gyro
     0x07,   0x47,   0x04,   0xF1, 0x28, 0x30, 0x38,   // CFG_9 inv_send_gyro -> inv_construct3_fifo
     0x07,   0x6C,   0x04,   0xF1, 0x28, 0x30, 0x38,   // CFG_12 inv_send_accel -> inv_construct3_fifo
-    0x02,   0x16,   0x02,   0x00, 0x02               //(0x07 -> 16Mhz) D_0_22 inv_set_fifo_rate (0x06 for first 8mhz board) (0x09 for 8Mhz board from Binoy)
+    0x02,   0x16,   0x02,   0x00, 0x01                // D_0_22 inv_set_fifo_rate
 
     // This very last 0x01 WAS a 0x09, which drops the FIFO rate down to 20 Hz. 0x07 is 25 Hz,
     // 0x01 is 100Hz. Going faster than 100Hz (0x00=200Hz) tends to result in very noisy data.
@@ -645,6 +645,14 @@ uint8_t MPU6050::dmpGetGyro(int16_t *data, const uint8_t* packet) {
     data[0] = (packet[16] << 8) + packet[17];
     data[1] = (packet[20] << 8) + packet[21];
     data[2] = (packet[24] << 8) + packet[25];
+    return 0;
+}
+uint8_t MPU6050::dmpGetGyro(VectorInt16 *v, const uint8_t* packet) {
+    // TODO: accommodate different arrangements of sent data (ONLY default supported now)
+    if (packet == 0) packet = dmpPacketBuffer;
+    v -> x = (packet[16] << 8) + packet[17];
+    v -> y = (packet[20] << 8) + packet[21];
+    v -> z = (packet[24] << 8) + packet[25];
     return 0;
 }
 // uint8_t MPU6050::dmpSetLinearAccelFilterCoefficient(float coef);

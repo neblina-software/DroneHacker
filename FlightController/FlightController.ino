@@ -75,6 +75,7 @@ int power = 0;
 
 #define THROTTLE_IN_PIN 3
 #define PITCH_IN_PIN 4
+#define ROLL_IN_PIN 5
 
 /**************
 *     SERVO   *
@@ -149,14 +150,17 @@ float ypr[3];
 
 #define THROTTLE_FLAG 1
 #define PITCH_FLAG 1
+#define ROLL_FLAG 1
 
 volatile uint8_t bUpdateFlagsShared;
 
 volatile uint16_t unThrottleInShared;
 volatile uint16_t unPitchInShared;
+volatile uint16_t unRollInShared;
 
 uint32_t ulThrottleStart;
 uint32_t ulPitchStart;
+uint32_t ulRollStart;
 
 volatile bool mpuInterrupt = false;
 void dmpDataReady() {
@@ -193,6 +197,7 @@ void setup(){
 
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
   PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch, CHANGE);
+  PCintPort::attachInterrupt(ROLL_IN_PIN, calcRoll, CHANGE);
   
   arm();
   
@@ -222,6 +227,7 @@ void loop() {
     
   static uint16_t unThrottleIn;
   static uint16_t unPitchIn;
+  static uint16_t unRollIn;
 
   static uint8_t bUpdateFlags;
 
@@ -258,6 +264,9 @@ void loop() {
     }
     if(bUpdateFlags & PITCH_FLAG) {
       unPitchIn = unPitchInShared;
+    }
+    if(bUpdateFlags & ROLL_FLAG) {
+      unRollIn = unRollInShared;
     }
     
     bUpdateFlagsShared = 0;
@@ -347,7 +356,7 @@ void loop() {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unPitchIn) {
-          //Serial.println(unPitchIn);
+         //Serial.println(unPitchIn);
           //pitchInput = -(abs(mpuPitch));
           if(unPitchIn > 1550) {
             pitchSetpoint = map(unPitchIn, 1550, 2000, 0, 30);
@@ -360,17 +369,28 @@ void loop() {
             pitchPID.Compute();
             outputTR = auxTR + pitchOutput;
             outputBR = auxBR + pitchOutput;
+          } 
+    }
+  }
+  
+  if(bUpdateFlags & ROLL_FLAG) {
+    if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
+        && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
+        != unRollIn) {
+          //Serial.println(unRollIn);
+          //RollInput = -(abs(mpuRoll));
+          if(unRollIn > 1550) {
+            rollSetpoint = map(unRollIn, 1550, 2000, 0, 30);
+            rollPID.Compute();
+            outputTL = auxTL + rollOutput;
+            outputTR = auxTR + rollOutput;
           }
-          /*
-          *
-          
-          if(unPitchIn > 1450 || unPitchIn < 1550) {
-              outputTL = auxTL;
-              outputTR = auxTR;
-              outputBR = auxBR;
-              outputBL = auxBL;
+          if(unRollIn < 1450) {
+            rollSetpoint = map(unRollIn, 1000, 1450, 0, 30);
+            rollPID.Compute();
+            outputBL = auxBL + rollOutput;
+            outputBR = auxBR + rollOutput;
           }
-          **/
     }
   }
     
@@ -400,6 +420,15 @@ void calcPitch() {
   } else{
     unPitchInShared = (uint16_t)(micros() - ulPitchStart);
     bUpdateFlagsShared |= PITCH_FLAG;
+  }
+}
+
+void calcRoll() {
+  if(digitalRead(ROLL_IN_PIN) == HIGH) { 
+    ulRollStart = micros();
+  } else{
+    unRollInShared = (uint16_t)(micros() - ulRollStart);
+    bUpdateFlagsShared |= ROLL_FLAG;
   }
 }
 

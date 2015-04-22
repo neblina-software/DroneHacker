@@ -38,7 +38,12 @@ que se encuentran en la carpeta /lib/.
 
 * Import -> Add Library
 
-Nota: No descomprimir las librerias, importar con extension .zip
+Reiniciar Arduino IDE.
+
+Nota: Agregar librerias a la carpeta "libraries" de Arduino.
+
+PD: Gracias a la comunidad que ha reportado los errores de compilacion.
+Si encuentras alguno, favor de reportarlo.
 
 Notas generales
 ===============
