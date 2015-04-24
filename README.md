@@ -1,5 +1,11 @@
 ![DroneHacker](https://raw.githubusercontent.com/neblina-software/DroneHacker/master/diagrams/demo.jpg)
 
+Disclaimer
+==========
+
+Antes de probar este codigo, asegurate de remover tus helices o propelas. En caso contrario,
+podrias hacerte daño.
+
 Proyecto Drone Hacker Shield
 ============================
 
