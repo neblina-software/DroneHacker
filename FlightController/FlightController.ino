@@ -100,9 +100,9 @@ Servo servoMotorBL;
 * kd = Derivative term   *
 *************************/
 
-float kp = 25;
-float ki = 25;
-float kd = 25;
+float kp = .25;
+float ki = .25;
+float kd = .25;
 
 /*************************
 *          PID           *
