@@ -58,13 +58,12 @@ Open Hardware y Open Source Software en español.
 
 Bajo licensia BSD.
 
-Pagina oficial
-==============
+Comunidad
+=========
 
-Proximamente...
-
-Puedes visitar nuestra comunidad 'Balero CMS' en Google Plus,
-Arduino Mexico y Drones (desarrolladores) en Facebook.
+El proyecto se ha compartido en Arduino México y Drones Mexico (Desarrolladores)
+en la página de facebook, por lo que usuaros han compartido ideas y propuesto algunas caracteristicas
+que pronto se iran añadiendo como por ejemplo: inteligencia artificial, mejoras, contribuciones.
 
 
 Licencia
@@ -75,5 +74,5 @@ de el autor, referencias, y deberias adjuntar el codigo fuente.
 
 Author: Anibal Gomez <anibalgomez@icloud.com>
 
-2015, Todos los derechos reservados.
+2016, Todos los derechos reservados.
 

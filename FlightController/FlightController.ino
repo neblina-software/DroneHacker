@@ -1,5 +1,5 @@
 /*
-* DroneHacker (c) 2015 Anibal Gomez
+* DroneHacker (c) 2016 Anibal Gomez
 * ---------------------------------
 * Software Controlador De Vuelo
 * ---------------------------------
@@ -30,6 +30,24 @@
 * - Use estandares de convencion
 * - Use variables lo mas descriptivas posibles
 * - Use DocBlocks en la parte superior de cada metodo
+* 
+* NOTAS
+* =====
+* 
+* - Dado que el español es mi lenguaje materno, los comentarios del código serán
+*   en éste lenguaje, pero los nombres de variables y funciones seran en lenguaje inglés,
+*   puesto que es más fácil mantener la mente concentrada en un sólo lenguaje.
+* 
+* MEJORAS
+* =======
+* 
+* 07/02/2016: Para la gente que probó el código antes de ésta fecha:
+* 
+* + El código tenia un error y los valores estaban invertidos y se ha mejorado.
+*   + Setpoint: Corresponde al valor de entrada (MPU).
+*   + Input: Corresponde al valor de entrada del radio control.
+*   
+* Si deseas saber más investiga un poco más acerca de "Controladores P.I.D.".
 *
 * ---------------------------------
 * anibalgomez@icloud.com
@@ -55,32 +73,41 @@
 int outputTL, outputTR, outputBR, outputBL, auxTL, auxTR, auxBR, auxBL;
 int mpuYaw, mpuPitch, mpuRoll;
 
+/***************************
+ * Ganancia De PID a Motor *
+ * Mapeo de 1000 a 2000    *
+ * (Se cuidadoso aqui)     *
+ **************************/
+int motorGain = 20;
+
 /**************
-*    SIGNAL   *
-*    CHECKER  *
+*   CHECADOR  *
+*    SEÑAL    *
 **************/
 
 int power = 0;
 
-/****************
-* STABILIZER AT *
-****************/
+/*******************************************
+* VALOR DONDE SE ACTIVARA EL ESTABILIZADOR *
+********************************************/
 
 #define MPU_STABILIZER_ACTIVATION 2
 
-/**************
-*     RX/TX   *
-*     PINS    *
-**************/
+/******************
+*   RADIO CONTROL *
+*     RX/TX       *
+*     PINS        *
+*******************/
 
 #define THROTTLE_IN_PIN 3 // Gas
 #define PITCH_IN_PIN 4 // Elevator
 #define ROLL_IN_PIN 5 // Aileron
 
-/**************
-*     SERVO   *
-*     PINS    *
-**************/
+/********************************
+*  Electronic Speed Controllers *
+*            SERVO              *
+*            PINS               *
+*********************************/
 
 #define MOTORTL_OUT_PIN 8
 #define MOTORTR_OUT_PIN 9
@@ -92,21 +119,32 @@ Servo servoMotorTR;
 Servo servoMotorBR;
 Servo servoMotorBL;
 
+/********************************
+*          PID                  *
+*       CALIBRACION             *
+* kp = Proporcional             *
+* ki = Integrativo              *
+* kd = Derivativo               *
+*********************************
+* Prefijo agg = agresivo        *
+* Prefijo cons = conservativo   *
+*********************************/
+
+//float kp = .20;
+//float ki = .040;
+//float kd = .100;
+
+// Tuning Parametros
+double PitchaggKp=.40, PitchaggKi=0.02, PitchaggKd=.1;
+double PitchconsKp=.1, PitchconsKi=0.005, PitchconsKd=0.025;
+
+double RollaggKp=.40, RollaggKi=0.02, RollaggKd=.1;
+double RollconsKp=.1, RollconsKi=0.005, RollconsKd=0.025;
+
+
 /*************************
 *          PID           *
-*       CALIBRATION      *
-* kp = Proportional term *
-* ki = Integral term     *
-* kd = Derivative term   *
-*************************/
-
-float kp = .20;
-float ki = .040;
-float kd = .100;
-
-/*************************
-*          PID           *
-*         LIMITS         *
+*         LIMITES        *
 *************************/
 
 #define OUTPUT_LIMITS 30
@@ -120,8 +158,9 @@ double rollSetpoint, rollInput, rollOutput;
 *   Z: Yaw    *
 **************/
 
-PID pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, kp, ki, kd, DIRECT);
-PID rollPID(&rollInput, &rollOutput, &rollSetpoint, kp, ki, kd, DIRECT);
+//Specify the links and initial tuning parameters
+PID pitchPID(&pitchInput, &pitchOutput, &pitchSetpoint, PitchconsKp, PitchconsKi, PitchconsKd, DIRECT);
+PID rollPID(&rollInput, &rollOutput, &rollSetpoint, RollconsKp, RollconsKi, RollconsKd, DIRECT);
 
 /**************
 *     MPU     *
@@ -171,10 +210,11 @@ void setup(){
   
   /*****************
   *       PID      *
-  * INITIALIZATION *
+  * INICIALIZACION *
   ******************/
-  //Input = 0;
-  //Setpoint = 0;
+  pitchInput = 0;
+  rollInput = 0;
+
   pitchPID.SetMode(AUTOMATIC);
   rollPID.SetMode(AUTOMATIC);
   pitchPID.SetOutputLimits(0, OUTPUT_LIMITS);
@@ -278,7 +318,8 @@ void loop() {
     // Iniciar contador
     power++;
   }
-  
+
+  /**
   if(power > 2) {
     Serial.println("No Signal!");
     outputTL = 1000;
@@ -287,23 +328,41 @@ void loop() {
     outputBR = 1000;
     delay(500);
   }
-  
+  **/
+
+  pitchSetpoint = mpuPitch; // Valor de entrada
+  pitchInput = map(unPitchIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+  double Pitchgap = abs(pitchSetpoint-pitchInput); // Distancia hasta setpoint (Error)
+  if(Pitchgap<3) {  // Estamos lejos del setpoint, usar parametros conservativos
+      pitchPID.SetTunings(PitchconsKp, PitchconsKi, PitchconsKd);
+  } else {
+    // Estamos muy cerca del setpoint, usa parametros agresivos
+    pitchPID.SetTunings(PitchaggKp, PitchaggKi, PitchaggKd);
+  }
+  pitchPID.Compute();
+
+  rollSetpoint = mpuRoll;
+  rollInput = map(unRollIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+  double Rollgap = abs(rollSetpoint-rollInput); // Distancia hasta setpoint (Error)
+  if(Rollgap<3) {  // Estamos lejos del setpoint, usar parametros conservativos
+      rollPID.SetTunings(RollconsKp, RollconsKi, RollconsKd);
+  } else {
+    // Estamos muy cerca del setpoint, usa parametros agresivos
+    rollPID.SetTunings(RollaggKp, RollaggKi, RollaggKd);
+  }
+  rollPID.Compute();
+
+  //Serial.println(pitchOutput);
+  Serial.println("Pitch: ");
+  Serial.println(mpuPitch);
+  Serial.println("Roll: ");
+  Serial.println(mpuRoll);
+  //Serial.println(rollOutput);
+            
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unThrottleIn) {
-          /**
-          if(unThrottleIn > (2000-OUTPUT_LIMITS)) {
-            outputTR = (2000-OUTPUT_LIMITS);
-            outputTL = (2000-OUTPUT_LIMITS);
-            outputBL = (2000-OUTPUT_LIMITS);
-            outputBR = (2000-OUTPUT_LIMITS);
-            auxTR = (2000-OUTPUT_LIMITS);
-            auxTL = (2000-OUTPUT_LIMITS);
-            auxBL = (2000-OUTPUT_LIMITS);
-            auxBR = (2000-OUTPUT_LIMITS);
-          }
-          **/
           outputTR = unThrottleIn;
           outputTL = unThrottleIn;
           outputBL = unThrottleIn;
@@ -312,64 +371,66 @@ void loop() {
           auxTL = unThrottleIn;
           auxBL = unThrottleIn;
           auxBR = unThrottleIn;
-          /*************
-          * Stabilizer *
-          **************/
-          //if(unThrottleIn > 1100) {
-            pitchInput = -(abs(mpuPitch)); // Not less than 3 or not equals to 0
-            pitchSetpoint = 0;
-            pitchPID.Compute();
-            //Serial.println(pitchOutput);
-            rollInput = -(abs(mpuRoll));; // Not less than 3 or not equals to 0
-            rollSetpoint = 0;
-            rollPID.Compute();
-            //Serial.println(rollOutput);
-            if(mpuPitch > MPU_STABILIZER_ACTIVATION) {
-               outputTL = unThrottleIn + pitchOutput;
-               outputBL = unThrottleIn + pitchOutput;
-               auxTL = unThrottleIn + pitchOutput;
-               auxBL = unThrottleIn + pitchOutput;
-            }
-            if(mpuPitch < -MPU_STABILIZER_ACTIVATION) {
-               outputTR = unThrottleIn + pitchOutput;
-               outputBR = unThrottleIn + pitchOutput;
-               auxTR = unThrottleIn + pitchOutput;
-               auxBR = unThrottleIn + pitchOutput;
-            }
-            if(mpuRoll > MPU_STABILIZER_ACTIVATION) {
-               outputBL = unThrottleIn + rollOutput;
-               outputBR = unThrottleIn + rollOutput;
-               auxBL = unThrottleIn + rollOutput;
-               auxBR = unThrottleIn + rollOutput;
-            }
-            if(mpuRoll < -MPU_STABILIZER_ACTIVATION) {
-               outputTL = unThrottleIn + rollOutput;
-               outputTR = unThrottleIn + rollOutput;
-               auxTL = unThrottleIn + rollOutput;
-               auxTR = unThrottleIn + rollOutput;
-            }
-          //}
+          /**
+           * ESTABILIZADOR
+           * AUTOMATICO
+           */
+          // Girar Izquierda (Regresa Grados Positivos)
+          if(mpuPitch > 0) {
+            outputTL = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
+            outputBL = unThrottleIn + (pitchOutput + motorGain);
+          }
+          // Girar Derecha (Regresa Grados Negastivos)
+          if(mpuPitch < 0) {
+            outputTR = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
+            outputBR = unThrottleIn + (pitchOutput + motorGain);
+          }
+          // Inclinar Adelante (Grados negativos)
+          if(mpuRoll < 0) {
+            outputTL = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
+            outputTR = unThrottleIn + (rollOutput + motorGain);
+          }
+          // Inclinar Atras (Grados Positivos)
+          if(mpuRoll > 0) {
+            outputBL = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
+            outputBR = unThrottleIn + (rollOutput + motorGain);
+          }
+          /**
+           * FIN
+           * ESTABILIZADOR
+           * AUTOMATICO
+           */
     }
   }
-  
+  /**
   if(bUpdateFlags & PITCH_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unPitchIn) {
          //Serial.println(unPitchIn);
-          //pitchInput = -(abs(mpuPitch));
+            pitchInput = map(unPitchIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+            pitchSetpoint = mpuPitch; // Valor deseado en grados
+            double gap = abs(pitchSetpoint-pitchInput); //distance away from setpoint
+            if(gap<5)
+            {  //we're close to setpoint, use conservative tuning parameters
+              pitchPID.SetTunings(PitchconsKp, PitchconsKi, PitchconsKd);
+            }
+            else
+            {
+               //we're far from setpoint, use aggressive tuning parameters
+               pitchPID.SetTunings(PitchaggKp, PitchaggKi, PitchaggKd);
+            }
+          pitchPID.Compute();
+          // Ir A Derecha
           if(unPitchIn > 1550) {
-            pitchSetpoint = map(unPitchIn, 1550, 2000, 0, 30);
-            pitchPID.Compute();
-            outputTL = auxTL + pitchOutput;
-            outputBL = auxBL + pitchOutput;
+            outputTL = auxTL + (pitchOutput + motorGain); // Convertir grados a RPMs
+            outputBL = auxTL + (pitchOutput + motorGain);
           }
+          // Ir A La Izquierda
           if(unPitchIn < 1450) {
-            pitchSetpoint = map(unPitchIn, 1000, 1450, 0, 30);
-            pitchPID.Compute();
-            outputTR = auxTR + pitchOutput;
-            outputBR = auxBR + pitchOutput;
-          } 
+            outputTR = auxTR + (pitchOutput + motorGain);
+            outputBR = auxBR + (pitchOutput + motorGain);
+          }
     }
   }
   
@@ -378,21 +439,30 @@ void loop() {
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
         != unRollIn) {
           //Serial.println(unRollIn);
-          //RollInput = -(abs(mpuRoll));
+            rollInput = map(unRollIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+            rollSetpoint = mpuRoll; // Valor deseado en grados
+            double gap = abs(rollSetpoint-rollInput); //distance away from setpoint
+            if(gap<5)
+            {  //we're close to setpoint, use conservative tuning parameters
+              rollPID.SetTunings(RollconsKp, RollconsKi, RollconsKd);
+            }
+            else
+            {
+               //we're far from setpoint, use aggressive tuning parameters
+               rollPID.SetTunings(RollaggKp, RollaggKi, RollaggKd);
+            }
+          pitchPID.Compute();
           if(unRollIn > 1550) {
-            rollSetpoint = map(unRollIn, 1550, 2000, 0, 30);
-            rollPID.Compute();
-            outputTL = auxTL + rollOutput;
-            outputTR = auxTR + rollOutput;
+            outputTL = auxTL + (rollOutput + motorGain);
+            outputTR = auxTR + (rollOutput + motorGain);
           }
           if(unRollIn < 1450) {
-            rollSetpoint = map(unRollIn, 1000, 1450, 0, 30);
-            rollPID.Compute();
-            outputBL = auxBL + rollOutput;
-            outputBR = auxBR + rollOutput;
+            outputBL = auxBL + (rollOutput + motorGain);
+            outputBR = auxBR + (rollOutput + motorGain);
           }
     }
   }
+  **/
     
   initMotors(
             outputTL,
@@ -441,10 +511,10 @@ void arm() {
 
 void initMotors(int tl, int tr, int br, int bl) {
     
-  Serial.println(tl);
-  Serial.println(tr);
-  Serial.println(br);
-  Serial.println(bl);
+  //Serial.println(tl);
+  //Serial.println(tr);
+  //Serial.println(br);
+  //Serial.println(bl);
   
   servoMotorTL.writeMicroseconds(tl);
   servoMotorTR.writeMicroseconds(tr);
