@@ -78,7 +78,7 @@ int mpuYaw, mpuPitch, mpuRoll;
  * Mapeo de 1000 a 2000    *
  * (Se cuidadoso aqui)     *
  **************************/
-int motorGain = 20;
+int motorGain = 70;
 
 /**************
 *   CHECADOR  *
@@ -135,11 +135,12 @@ Servo servoMotorBL;
 //float kd = .100;
 
 // Tuning Parametros
-double PitchaggKp=.40, PitchaggKi=0.02, PitchaggKd=.1;
-double PitchconsKp=.1, PitchconsKi=0.005, PitchconsKd=0.025;
+// http://diydrones.com/page/pid-tuning-demos
+double PitchaggKp=.40, PitchaggKi=0.02, PitchaggKd=.9;
+double PitchconsKp=.53, PitchconsKi=0.02, PitchconsKd=0.12;
 
-double RollaggKp=.40, RollaggKi=0.02, RollaggKd=.1;
-double RollconsKp=.1, RollconsKi=0.005, RollconsKd=0.025;
+double RollaggKp=.40, RollaggKi=0.02, RollaggKd=.9;
+double RollconsKp=.53, RollconsKi=0.02, RollconsKd=0.12;
 
 
 /*************************
@@ -330,10 +331,10 @@ void loop() {
   }
   **/
 
-  pitchSetpoint = mpuPitch; // Valor de entrada
-  pitchInput = map(unPitchIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+  pitchSetpoint = mpuPitch; // Valor Deseado (en grados)
+  pitchInput = map(unPitchIn, 900, 2000, -30, 30); // Valor de entrada (necesita convertirse a grados)
   double Pitchgap = abs(pitchSetpoint-pitchInput); // Distancia hasta setpoint (Error)
-  if(Pitchgap<3) {  // Estamos lejos del setpoint, usar parametros conservativos
+  if(Pitchgap<5) {  // Estamos lejos del setpoint, usar parametros conservativos
       pitchPID.SetTunings(PitchconsKp, PitchconsKi, PitchconsKd);
   } else {
     // Estamos muy cerca del setpoint, usa parametros agresivos
@@ -341,10 +342,10 @@ void loop() {
   }
   pitchPID.Compute();
 
-  rollSetpoint = mpuRoll;
-  rollInput = map(unRollIn, 900, 2000, -30, 30); // Valor deseado (necesita convertirse a grados)
+  rollSetpoint = mpuRoll; // Valor deseado (necesita convertirse a grados)
+  rollInput = map(unRollIn, 900, 2000, -30, 30); // Valor de entrada (necesita convertirse a grados)
   double Rollgap = abs(rollSetpoint-rollInput); // Distancia hasta setpoint (Error)
-  if(Rollgap<3) {  // Estamos lejos del setpoint, usar parametros conservativos
+  if(Rollgap<5) {  // Estamos lejos del setpoint, usar parametros conservativos
       rollPID.SetTunings(RollconsKp, RollconsKi, RollconsKd);
   } else {
     // Estamos muy cerca del setpoint, usa parametros agresivos
@@ -352,12 +353,14 @@ void loop() {
   }
   rollPID.Compute();
 
+  /**
   //Serial.println(pitchOutput);
   Serial.println("Pitch: ");
   Serial.println(mpuPitch);
   Serial.println("Roll: ");
   Serial.println(mpuRoll);
   //Serial.println(rollOutput);
+  **/
             
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
@@ -511,10 +514,10 @@ void arm() {
 
 void initMotors(int tl, int tr, int br, int bl) {
     
-  //Serial.println(tl);
-  //Serial.println(tr);
-  //Serial.println(br);
-  //Serial.println(bl);
+  Serial.println(tl);
+  Serial.println(tr);
+  Serial.println(br);
+  Serial.println(bl);
   
   servoMotorTL.writeMicroseconds(tl);
   servoMotorTR.writeMicroseconds(tr);
