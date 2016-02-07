@@ -73,9 +73,9 @@ int power = 0;
 *     PINS    *
 **************/
 
-#define THROTTLE_IN_PIN 3
-#define PITCH_IN_PIN 4
-#define ROLL_IN_PIN 5
+#define THROTTLE_IN_PIN 3 // Gas
+#define PITCH_IN_PIN 4 // Elevator
+#define ROLL_IN_PIN 5 // Aileron
 
 /**************
 *     SERVO   *
