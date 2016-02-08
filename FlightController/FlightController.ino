@@ -37,6 +37,11 @@
 * - Dado que el español es mi lenguaje materno, los comentarios del código serán
 *   en éste lenguaje, pero los nombres de variables y funciones seran en lenguaje inglés,
 *   puesto que es más fácil mantener la mente concentrada en un sólo lenguaje.
+*   
+*   Armado: 3 segundos Aileron y Elevator hacia abajo ambos.
+*   Segunda palanca hacia la parte inferior izquierda por 3 segundos.
+*   Roll: 1960
+*   Pitch: 1108
 * 
 * MEJORAS
 * =======
@@ -64,6 +69,18 @@
 #include <Servo.h>
 #include "I2Cdev.h"
 #include <PID_v1.h>
+
+
+int c;
+int armed = 0;
+int disarmed = 1;
+
+  static uint16_t unThrottleIn;
+  static uint16_t unPitchIn;
+  static uint16_t unRollIn;
+  
+unsigned long time1;
+unsigned long time2;
 
 #include "MPU6050_6Axis_MotionApps20.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -208,7 +225,12 @@ void dmpDataReady() {
 }
 
 void setup(){
-  
+
+  servoMotorTL.writeMicroseconds(1000);
+  servoMotorTR.writeMicroseconds(1000);
+  servoMotorBL.writeMicroseconds(1000);
+  servoMotorBR.writeMicroseconds(1000);
+      
   /*****************
   *       PID      *
   * INICIALIZACION *
@@ -240,8 +262,6 @@ void setup(){
   PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch, CHANGE);
   PCintPort::attachInterrupt(ROLL_IN_PIN, calcRoll, CHANGE);
   
-  arm();
-  
   mpu.initialize();
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
   devStatus = mpu.dmpInitialize();
@@ -261,14 +281,10 @@ void setup(){
         Serial.print(devStatus);
         Serial.println(F(")"));
     }
-
+  
 }
 
 void loop() {
-    
-  static uint16_t unThrottleIn;
-  static uint16_t unPitchIn;
-  static uint16_t unRollIn;
 
   static uint8_t bUpdateFlags;
 
@@ -291,8 +307,8 @@ void loop() {
   mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
   
   mpuYaw = ypr[0] * 180/M_PI;
-  mpuPitch = ypr[1] * 180/M_PI;
-  mpuRoll = ypr[2] * 180/M_PI;
+  mpuRoll = ypr[1] * 180/M_PI;
+  mpuPitch = ypr[2] * 180/M_PI;
 
   if(bUpdateFlagsShared) {
     
@@ -320,7 +336,6 @@ void loop() {
     power++;
   }
 
-  /**
   if(power > 2) {
     Serial.println("No Signal!");
     outputTL = 1000;
@@ -329,7 +344,14 @@ void loop() {
     outputBR = 1000;
     delay(500);
   }
-  **/
+
+  arm();
+
+  // RADIO CONTROLLER DEBUG
+  //Serial.println("Pitch value: ");
+  //Serial.println(unPitchIn);
+  //Serial.println("Roll value: ");
+  //Serial.println(unRollIn);
 
   pitchSetpoint = mpuPitch; // Valor Deseado (en grados)
   pitchInput = map(unPitchIn, 900, 2000, -30, 30); // Valor de entrada (necesita convertirse a grados)
@@ -353,14 +375,16 @@ void loop() {
   }
   rollPID.Compute();
 
-  /**
+
+  // MPU DEBUG
   //Serial.println(pitchOutput);
   Serial.println("Pitch: ");
   Serial.println(mpuPitch);
   Serial.println("Roll: ");
   Serial.println(mpuRoll);
   //Serial.println(rollOutput);
-  **/
+  
+  
             
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
@@ -378,25 +402,26 @@ void loop() {
            * ESTABILIZADOR
            * AUTOMATICO
            */
+           // EJE "X" // ROLL
           // Girar Izquierda (Regresa Grados Positivos)
-          if(mpuPitch > 0) {
-            outputTL = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
-            outputBL = unThrottleIn + (pitchOutput + motorGain);
+          if(mpuRoll > 0) {
+            outputTL = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
+            outputBL = unThrottleIn + (rollOutput + motorGain);
           }
-          // Girar Derecha (Regresa Grados Negastivos)
-          if(mpuPitch < 0) {
-            outputTR = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
-            outputBR = unThrottleIn + (pitchOutput + motorGain);
+          // Girar Derecha (Regresa Grados Negativos)
+          if(mpuRoll < 0) {
+            outputTR = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
+            outputBR = unThrottleIn + (rollOutput + motorGain);
           }
           // Inclinar Adelante (Grados negativos)
-          if(mpuRoll < 0) {
-            outputTL = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
-            outputTR = unThrottleIn + (rollOutput + motorGain);
+          if(mpuPitch < 0) {
+            outputTL = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
+            outputTR = unThrottleIn + (pitchOutput + motorGain);
           }
           // Inclinar Atras (Grados Positivos)
-          if(mpuRoll > 0) {
-            outputBL = unThrottleIn + (rollOutput + motorGain); // Convertir grados a RPMs
-            outputBR = unThrottleIn + (rollOutput + motorGain);
+          if(mpuPitch > 0) {
+            outputBL = unThrottleIn + (pitchOutput + motorGain); // Convertir grados a RPMs
+            outputBR = unThrottleIn + (pitchOutput + motorGain);
           }
           /**
            * FIN
@@ -506,22 +531,67 @@ void calcRoll() {
 }
 
 void arm() {
-  servoMotorTL.writeMicroseconds(1000);
-  servoMotorTR.writeMicroseconds(1000);
-  servoMotorBL.writeMicroseconds(1000);
-  servoMotorBR.writeMicroseconds(1000);
+//  *   Roll: 1960
+//  *   Pitch: 1108
+  if(unRollIn > 1900 && unPitchIn < 1108) {
+      Serial.println("Empiezando contador de Armado: ");
+      c = c + 1;
+      delay(1000);
+  }
+  //Serial.println("Contador Armado: ");
+  //Serial.println(c);
+  if(c >= 5) { // 5 segundos
+    c = 0;
+    armed = 1;
+    disarmed = 0;
+    Serial.println("Armando Girando Motores...");
+      servoMotorTL.writeMicroseconds(1100);
+      servoMotorTR.writeMicroseconds(1100);
+      servoMotorBL.writeMicroseconds(1100);
+      servoMotorBR.writeMicroseconds(1100);
+    Serial.println("Armando motores....");
+    delay(2000);
+  }
+  disarm();
+}
+
+void disarm() {
+  if(armed == 1) {
+    //  *   Roll: 1024
+    //  *   Pitch: 1112
+    if(unRollIn < 1100 && unPitchIn < 1200) {
+        Serial.println("Empiezando contador de Desarmado: ");
+        c = c + 1;
+        delay(1000);
+    }
+    Serial.println("Contador Desamado: ");
+    Serial.println(c);
+    if(c >= 1) { // 1 segundos
+      c = 0;
+      armed = 0;
+      disarmed = 1;
+      Serial.println("Desarmando...");
+      servoMotorTL.writeMicroseconds(1000);
+      servoMotorTR.writeMicroseconds(1000);
+      servoMotorBL.writeMicroseconds(1000);
+      servoMotorBR.writeMicroseconds(1000);
+      delay(2000);
+    }
+  }
 }
 
 void initMotors(int tl, int tr, int br, int bl) {
-    
-  Serial.println(tl);
-  Serial.println(tr);
-  Serial.println(br);
-  Serial.println(bl);
+
+  if(power > 0 && armed == 1) {  
+  //Serial.println(tl);
+  //Serial.println(tr);
+  //Serial.println(br);
+  //Serial.println(bl);
   
   servoMotorTL.writeMicroseconds(tl);
   servoMotorTR.writeMicroseconds(tr);
   servoMotorBR.writeMicroseconds(br);
   servoMotorBL.writeMicroseconds(bl);
+  }
   
 }
