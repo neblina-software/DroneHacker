@@ -70,17 +70,9 @@
 #include "I2Cdev.h"
 #include <PID_v1.h>
 
-
-int c;
-int armed = 0;
-int disarmed = 1;
-
-  static uint16_t unThrottleIn;
-  static uint16_t unPitchIn;
-  static uint16_t unRollIn;
-  
-unsigned long time1;
-unsigned long time2;
+static uint16_t unThrottleIn;
+static uint16_t unPitchIn;
+static uint16_t unRollIn;
 
 #include "MPU6050_6Axis_MotionApps20.h"
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -225,11 +217,6 @@ void dmpDataReady() {
 }
 
 void setup(){
-
-  servoMotorTL.writeMicroseconds(1000);
-  servoMotorTR.writeMicroseconds(1000);
-  servoMotorBL.writeMicroseconds(1000);
-  servoMotorBR.writeMicroseconds(1000);
       
   /*****************
   *       PID      *
@@ -261,6 +248,11 @@ void setup(){
   PCintPort::attachInterrupt(THROTTLE_IN_PIN, calcThrottle, CHANGE); 
   PCintPort::attachInterrupt(PITCH_IN_PIN, calcPitch, CHANGE);
   PCintPort::attachInterrupt(ROLL_IN_PIN, calcRoll, CHANGE);
+
+  /**
+   * INICIAR ARMADO DE MOTORES
+   */
+  arm();
   
   mpu.initialize();
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
@@ -345,8 +337,6 @@ void loop() {
     delay(500);
   }
 
-  arm();
-
   // RADIO CONTROLLER DEBUG
   //Serial.println("Pitch value: ");
   //Serial.println(unPitchIn);
@@ -375,17 +365,16 @@ void loop() {
   }
   rollPID.Compute();
 
-
   // MPU DEBUG
+  /**
   //Serial.println(pitchOutput);
   Serial.println("Pitch: ");
   Serial.println(mpuPitch);
   Serial.println("Roll: ");
   Serial.println(mpuRoll);
   //Serial.println(rollOutput);
-  
-  
-            
+  **/
+        
   if(bUpdateFlags & THROTTLE_FLAG) {
     if(servoMotorTL.readMicroseconds() && servoMotorTR.readMicroseconds() 
         && servoMotorBL.readMicroseconds() && servoMotorBR.readMicroseconds()
@@ -491,7 +480,7 @@ void loop() {
     }
   }
   **/
-    
+  
   initMotors(
             outputTL,
             outputTR,
@@ -530,68 +519,24 @@ void calcRoll() {
   }
 }
 
-void arm() {
-//  *   Roll: 1960
-//  *   Pitch: 1108
-  if(unRollIn > 1900 && unPitchIn < 1108) {
-      Serial.println("Empiezando contador de Armado: ");
-      c = c + 1;
-      delay(1000);
-  }
-  //Serial.println("Contador Armado: ");
-  //Serial.println(c);
-  if(c >= 5) { // 5 segundos
-    c = 0;
-    armed = 1;
-    disarmed = 0;
-    Serial.println("Armando Girando Motores...");
-      servoMotorTL.writeMicroseconds(1100);
-      servoMotorTR.writeMicroseconds(1100);
-      servoMotorBL.writeMicroseconds(1100);
-      servoMotorBR.writeMicroseconds(1100);
-    Serial.println("Armando motores....");
-    delay(2000);
-  }
-  disarm();
-}
-
-void disarm() {
-  if(armed == 1) {
-    //  *   Roll: 1024
-    //  *   Pitch: 1112
-    if(unRollIn < 1100 && unPitchIn < 1200) {
-        Serial.println("Empiezando contador de Desarmado: ");
-        c = c + 1;
-        delay(1000);
-    }
-    Serial.println("Contador Desamado: ");
-    Serial.println(c);
-    if(c >= 1) { // 1 segundos
-      c = 0;
-      armed = 0;
-      disarmed = 1;
-      Serial.println("Desarmando...");
-      servoMotorTL.writeMicroseconds(1000);
-      servoMotorTR.writeMicroseconds(1000);
-      servoMotorBL.writeMicroseconds(1000);
-      servoMotorBR.writeMicroseconds(1000);
-      delay(2000);
-    }
-  }
-}
-
 void initMotors(int tl, int tr, int br, int bl) {
 
-  if(power > 0 && armed == 1) {  
-  //Serial.println(tl);
-  //Serial.println(tr);
-  //Serial.println(br);
-  //Serial.println(bl);
-  
+  Serial.println(tl);
+  Serial.println(tr);
+  Serial.println(br);
+  Serial.println(bl);
+ 
   servoMotorTL.writeMicroseconds(tl);
   servoMotorTR.writeMicroseconds(tr);
   servoMotorBR.writeMicroseconds(br);
   servoMotorBL.writeMicroseconds(bl);
-  }
   
 }
+
+void arm() {
+  servoMotorTL.writeMicroseconds(1000);
+  servoMotorTR.writeMicroseconds(1000);
+  servoMotorBL.writeMicroseconds(1000);
+  servoMotorBR.writeMicroseconds(1000); 
+}
+
