@@ -38,6 +38,7 @@
 *   en éste lenguaje, pero los nombres de variables y funciones seran en lenguaje inglés,
 *   puesto que es más fácil mantener la mente concentrada en un sólo lenguaje.
 *   
+*   (Caracteristicas aun no implementada)
 *   Armado: 3 segundos Aileron y Elevator hacia abajo ambos.
 *   Segunda palanca hacia la parte inferior izquierda por 3 segundos.
 *   Roll: 1960
