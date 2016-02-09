@@ -15,6 +15,14 @@ DroneHacker es una shield controladora de vuelo de desarrollo para arduino.
 
 * FlightController -> Programa Principal
 
+Versiones
+=========
+
+Por favor, no pruebes el código en fase de desarrollo.
+Testa únicamente las versiones finales:
+
+[https://github.com/neblina-software/DroneHacker/releases](https://github.com/neblina-software/DroneHacker/releases)
+
 Instrucciones de uso
 ====================
 
